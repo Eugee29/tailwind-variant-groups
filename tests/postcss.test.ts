@@ -55,11 +55,11 @@ describe("PostCSS candidate bridge", () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "variant-groups-"));
     temporaryRoots.push(root);
     await fs.mkdir(path.join(root, "app"));
-    await fs.mkdir(path.join(root, "ignored"));
+    await fs.mkdir(path.join(root, "app/ignored"));
     const page = path.join(root, "app/page.tsx");
     await fs.writeFile(page, '<div className="xl:(grid) md:(flex)" />');
     await fs.writeFile(
-      path.join(root, "ignored/other.tsx"),
+      path.join(root, "app/ignored/other.tsx"),
       '<div className="lg:(hidden)" />',
     );
 
@@ -68,7 +68,7 @@ describe("PostCSS candidate bridge", () => {
         variantGroups({
           base: root,
           include: ["app/**/*.tsx"],
-          exclude: ["ignored/**"],
+          exclude: ["app/ignored/**"],
         }),
       ]).process('@import "tailwindcss";', {
         from: path.join(root, "app.css"),
@@ -83,6 +83,74 @@ describe("PostCSS candidate bridge", () => {
     expect(second.css).toContain("2xl:grid");
     expect(second.css).toContain("2xl:grid-cols-2");
     expect(second.css).not.toContain("md:flex");
+  });
+
+  it("does not reuse a lenient cache entry in strict mode", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "variant-groups-"));
+    temporaryRoots.push(root);
+    await fs.mkdir(path.join(root, "app"));
+    await fs.writeFile(path.join(root, "app/page.tsx"), 'const c = "md:(flex"');
+
+    await postcss([variantGroups({ base: root, strict: false })]).process(
+      '@import "tailwindcss";',
+      { from: path.join(root, "app.css") },
+    );
+
+    await expect(
+      postcss([variantGroups({ base: root })]).process('@import "tailwindcss";', {
+        from: path.join(root, "app.css"),
+      }),
+    ).rejects.toThrow(/app[\\/]page\.tsx:1:\d+/);
+  });
+
+  it("emits one directory dependency message for every include glob", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "variant-groups-"));
+    temporaryRoots.push(root);
+    await fs.mkdir(path.join(root, "app"));
+
+    const result = await postcss([
+      variantGroups({
+        base: root,
+        include: ["app/**/*.tsx", "components/**/*.ts"],
+      }),
+    ]).process('@import "tailwindcss";', {
+      from: path.join(root, "app.css"),
+    });
+
+    expect(
+      result.messages.filter((message) => message.type === "dir-dependency"),
+    ).toEqual([
+      {
+        type: "dir-dependency",
+        plugin: "tailwind-variant-groups",
+        dir: root,
+        glob: "app/**/*.tsx",
+      },
+      {
+        type: "dir-dependency",
+        plugin: "tailwind-variant-groups",
+        dir: root,
+        glob: "components/**/*.ts",
+      },
+    ]);
+  });
+
+  it("ignores unsupported files even when custom globs include them", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "variant-groups-"));
+    temporaryRoots.push(root);
+    await fs.mkdir(path.join(root, "app"));
+    await fs.writeFile(
+      path.join(root, "app/page.mdx"),
+      '<div className="md:(flex)" />',
+    );
+
+    const result = await postcss([
+      variantGroups({ base: root, include: ["app/**/*"] }),
+    ]).process('@import "tailwindcss";', {
+      from: path.join(root, "app.css"),
+    });
+
+    expect(result.css).not.toContain("md:flex");
   });
 
   it("reports the malformed source filename in strict mode", async () => {

@@ -27,13 +27,18 @@ const DEFAULT_EXCLUDE = [
   "**/coverage/**",
 ];
 
-const candidateCache = new Map<string, CachedCandidates>();
+const candidateCaches = new Map<boolean, Map<string, CachedCandidates>>();
 const TAILWIND_IMPORT = /^\s*["']tailwindcss(?:["']|\s)/u;
+const SUPPORTED_EXTENSIONS = new Set([".js", ".jsx", ".ts", ".tsx"]);
 
 const variantGroups: PluginCreator<PostcssVariantGroupOptions> = (options = {}) => {
   const base = path.resolve(options.base ?? process.cwd());
   const include = options.include ?? DEFAULT_INCLUDE;
   const exclude = options.exclude ?? DEFAULT_EXCLUDE;
+  const strict = options.strict ?? true;
+  const candidateCache =
+    candidateCaches.get(strict) ?? new Map<string, CachedCandidates>();
+  candidateCaches.set(strict, candidateCache);
 
   return {
     postcssPlugin: "tailwind-variant-groups",
@@ -48,12 +53,14 @@ const variantGroups: PluginCreator<PostcssVariantGroupOptions> = (options = {}) 
       });
       if (tailwindImport === undefined) return;
 
-      const files = await fastGlob(include, {
-        absolute: true,
-        cwd: base,
-        ignore: exclude,
-        onlyFiles: true,
-      });
+      const files = (
+        await fastGlob(include, {
+          absolute: true,
+          cwd: base,
+          ignore: exclude,
+          onlyFiles: true,
+        })
+      ).filter((filename) => SUPPORTED_EXTENSIONS.has(path.extname(filename)));
       const matchedFiles = new Set(files);
       for (const filename of candidateCache.keys()) {
         if (!matchedFiles.has(filename)) candidateCache.delete(filename);
@@ -68,7 +75,7 @@ const variantGroups: PluginCreator<PostcssVariantGroupOptions> = (options = {}) 
           const transformed = transformVariantGroups(source, {
             filename,
             sourceMap: false,
-            ...(options.strict === undefined ? {} : { strict: options.strict }),
+            strict,
           });
           cached = {
             mtimeMs: stats.mtimeMs,
@@ -84,12 +91,14 @@ const variantGroups: PluginCreator<PostcssVariantGroupOptions> = (options = {}) 
           file: filename,
         });
       }
-      result.messages.push({
-        type: "dir-dependency",
-        plugin: "tailwind-variant-groups",
-        dir: base,
-        glob: include,
-      });
+      for (const glob of include) {
+        result.messages.push({
+          type: "dir-dependency",
+          plugin: "tailwind-variant-groups",
+          dir: base,
+          glob,
+        });
+      }
 
       const sortedCandidates = [...candidates].sort((left, right) =>
         left.localeCompare(right),
