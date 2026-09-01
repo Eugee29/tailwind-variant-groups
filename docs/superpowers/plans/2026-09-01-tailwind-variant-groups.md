@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build an npm package that expands UnoCSS-style variant groups in Next.js JavaScript and TypeScript sources and makes the expanded candidates visible to Tailwind CSS 4 under both Turbopack and Webpack.
+**Goal:** Build a package that expands UnoCSS-style variant groups in Next.js JavaScript and TypeScript sources and makes the expanded candidates visible to Tailwind CSS 4 under both Turbopack and Webpack.
 
 **Architecture:** A pure, source-map-aware transformer locates static JavaScript and TypeScript string ranges with `@babel/parser`, then expands balanced variant groups within those ranges. A shared webpack-compatible loader rewrites Next.js modules, a Next config wrapper installs that loader for Turbopack and Webpack, and a PostCSS companion scans the same files and injects expanded candidates through `@source inline(...)` before Tailwind runs.
 
@@ -12,7 +12,8 @@
 
 ## Global Constraints
 
-- Package name: `tailwind-breakpoint-group`.
+- Package name: `tailwind-variant-groups`.
+- Package manager: pnpm 11.25.0 with `pnpm-lock.yaml`.
 - Tailwind CSS compatibility: `>=4 <5`; Tailwind CSS 3 is unsupported.
 - Next.js compatibility: `>=15.3 <17`.
 - Node.js compatibility: `>=20.9`.
@@ -56,7 +57,7 @@
 
 **Files:**
 - Create: `package.json`
-- Create: `package-lock.json`
+- Create: `pnpm-lock.yaml`
 - Create: `tsconfig.json`
 - Create: `tsup.config.ts`
 - Create: `vitest.config.ts`
@@ -72,14 +73,15 @@
 
 - [ ] **Step 1: Add package and tool configuration**
 
-Create `package.json` with the following stable public shape; use `npm install` afterward so npm records the resolved compatible dependency versions in both files:
+Create `package.json` with the following stable public shape; use `pnpm install` afterward so pnpm records the resolved compatible dependency versions in both files:
 
 ```json
 {
-  "name": "tailwind-breakpoint-group",
+  "name": "tailwind-variant-groups",
   "version": "0.1.0",
   "description": "UnoCSS-style variant groups for Tailwind CSS 4 and Next.js",
   "type": "module",
+  "packageManager": "pnpm@11.25.0",
   "sideEffects": false,
   "engines": {
     "node": ">=20.9"
@@ -116,9 +118,9 @@ Create `package.json` with the following stable public shape; use `npm install` 
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:next": "npm run build && node scripts/test-next-fixture.mjs",
+    "test:next": "pnpm build && node scripts/test-next-fixture.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run format:check && npm run typecheck && npm test && npm run build && npm run test:next"
+    "verify": "pnpm format:check && pnpm typecheck && pnpm test && pnpm build && pnpm test:next"
   },
   "dependencies": {
     "@babel/parser": "^7.28.0",
@@ -152,7 +154,7 @@ Create `package.json` with the following stable public shape; use `npm install` 
 Run:
 
 ```bash
-npm install
+pnpm install
 ```
 
 Create `tsconfig.json`:
@@ -321,7 +323,7 @@ describe("expandVariantGroupsInText", () => {
 Run:
 
 ```bash
-npx vitest run tests/core/expand-text.test.ts
+pnpm exec vitest run tests/core/expand-text.test.ts
 ```
 
 Expected: FAIL because `src/core/expand-text.ts` does not exist.
@@ -375,8 +377,8 @@ function expandSequence(body: string, inheritedPrefix: string): string[];
 Run:
 
 ```bash
-npx vitest run tests/core/expand-text.test.ts
-npm run typecheck
+pnpm exec vitest run tests/core/expand-text.test.ts
+pnpm typecheck
 ```
 
 Expected: both commands PASS.
@@ -384,7 +386,7 @@ Expected: both commands PASS.
 - [ ] **Step 6: Commit the grammar slice**
 
 ```bash
-git add package.json package-lock.json tsconfig.json tsup.config.ts vitest.config.ts prettier.config.mjs .gitignore src/core tests/core/expand-text.test.ts
+git add package.json pnpm-lock.yaml tsconfig.json tsup.config.ts vitest.config.ts prettier.config.mjs .gitignore src/core tests/core/expand-text.test.ts
 git commit -m "feat: parse nested Tailwind variant groups"
 ```
 
@@ -472,7 +474,7 @@ describe("transformVariantGroups", () => {
 Run:
 
 ```bash
-npx vitest run tests/core/transform.test.ts
+pnpm exec vitest run tests/core/transform.test.ts
 ```
 
 Expected: FAIL because the public transformer is not implemented.
@@ -528,8 +530,8 @@ Export the transformer, types, and `VariantGroupSyntaxError` from `src/index.ts`
 Run:
 
 ```bash
-npx vitest run tests/core
-npm run typecheck
+pnpm exec vitest run tests/core
+pnpm typecheck
 ```
 
 Expected: PASS.
@@ -609,7 +611,7 @@ describe("variant group loader", () => {
 Run:
 
 ```bash
-npx vitest run tests/loader.test.ts
+pnpm exec vitest run tests/loader.test.ts
 ```
 
 Expected: FAIL because `src/loader.ts` does not exist.
@@ -645,8 +647,8 @@ Call `cacheable(true)`, read options from `getOptions()` with `query` as a compa
 Run:
 
 ```bash
-npx vitest run tests/loader.test.ts tests/core
-npm run typecheck
+pnpm exec vitest run tests/loader.test.ts tests/core
+pnpm typecheck
 ```
 
 Expected: PASS.
@@ -656,7 +658,7 @@ Expected: PASS.
 Run:
 
 ```bash
-npm run build
+pnpm build
 node -e "const loader=require('./dist/loader.cjs'); if(typeof loader.default!=='function'&&typeof loader!=='function') process.exit(1)"
 ```
 
@@ -677,7 +679,7 @@ git commit -m "feat: add shared Next source loader"
 
 **Interfaces:**
 - Consumes: the built loader filename `loader.cjs` and `LoaderOptions` from Task 3.
-- Produces: `withVariantGroups(nextConfig?, options?)` exported from `tailwind-breakpoint-group/next`.
+- Produces: `withVariantGroups(nextConfig?, options?)` exported from `tailwind-variant-groups/next`.
 
 - [ ] **Step 1: Write failing config-merging tests**
 
@@ -733,7 +735,7 @@ describe("withVariantGroups", () => {
 Run:
 
 ```bash
-npx vitest run tests/next.test.ts
+pnpm exec vitest run tests/next.test.ts
 ```
 
 Expected: FAIL because `src/next.ts` does not exist.
@@ -779,9 +781,9 @@ Always return the resulting config. Do not mutate the original `nextConfig` obje
 Run:
 
 ```bash
-npx vitest run tests/next.test.ts
-npm run typecheck
-npm run build
+pnpm exec vitest run tests/next.test.ts
+pnpm typecheck
+pnpm build
 node -e "const {withVariantGroups}=require('./dist/next.cjs'); const c=withVariantGroups({}); if(!c.turbopack||typeof c.webpack!=='function') process.exit(1)"
 node --input-type=module -e "import {withVariantGroups} from './dist/next.js'; const c=withVariantGroups({}); if(!c.turbopack||typeof c.webpack!=='function') process.exit(1)"
 ```
@@ -803,7 +805,7 @@ git commit -m "feat: configure Turbopack and Webpack transforms"
 
 **Interfaces:**
 - Consumes: `transformVariantGroups(source, { filename, strict, sourceMap: false })` from Task 2.
-- Produces: a PostCSS 8 plugin creator exported from `tailwind-breakpoint-group/postcss`.
+- Produces: a PostCSS 8 plugin creator exported from `tailwind-variant-groups/postcss`.
 
 - [ ] **Step 1: Write failing PostCSS integration tests**
 
@@ -917,7 +919,7 @@ it("reports the malformed source filename in strict mode", async () => {
 Run:
 
 ```bash
-npx vitest run tests/postcss.test.ts
+pnpm exec vitest run tests/postcss.test.ts
 ```
 
 Expected: FAIL because `src/postcss.ts` does not exist.
@@ -958,7 +960,7 @@ Resolve `base` from the option or `process.cwd()`. Discover absolute, file-only 
 
 - [ ] **Step 4: Inject candidates and dependency messages**
 
-Return a PostCSS plugin object with `postcssPlugin: "tailwind-breakpoint-group"` and an async `Once` hook. First find an `@import` whose params begin with `"tailwindcss"` or `'tailwindcss'`; return without scanning when absent. When candidates exist, create exactly one at-rule:
+Return a PostCSS plugin object with `postcssPlugin: "tailwind-variant-groups"` and an async `Once` hook. First find an `@import` whose params begin with `"tailwindcss"` or `'tailwindcss'`; return without scanning when absent. When candidates exist, create exactly one at-rule:
 
 ```ts
 postcss.atRule({
@@ -974,9 +976,9 @@ Insert it immediately after the Tailwind import so the later Tailwind PostCSS pl
 Run:
 
 ```bash
-npx vitest run tests/postcss.test.ts
-npm test
-npm run typecheck
+pnpm exec vitest run tests/postcss.test.ts
+pnpm test
+pnpm typecheck
 ```
 
 Expected: all commands PASS; the generated CSS contains the responsive and nested selectors.
@@ -1078,7 +1080,7 @@ Create `tests/fixtures/next-app/package.json`:
 
 ```json
 {
-  "name": "tailwind-breakpoint-group-next-fixture",
+  "name": "tailwind-variant-groups-next-fixture",
   "private": true,
   "version": "0.0.0"
 }
@@ -1087,7 +1089,7 @@ Create `tests/fixtures/next-app/package.json`:
 Use package self-references in `next.config.mjs`:
 
 ```js
-import { withVariantGroups } from "tailwind-breakpoint-group/next";
+import { withVariantGroups } from "tailwind-variant-groups/next";
 
 export default withVariantGroups({});
 ```
@@ -1099,7 +1101,7 @@ import { fileURLToPath } from "node:url";
 
 export default {
   plugins: {
-    "tailwind-breakpoint-group/postcss": {
+    "tailwind-variant-groups/postcss": {
       base: fileURLToPath(new URL(".", import.meta.url)),
     },
     "@tailwindcss/postcss": {},
@@ -1146,7 +1148,7 @@ export default function Page() {
 Run:
 
 ```bash
-npm run test:next
+pnpm test:next
 ```
 
 Expected: both builds PASS, emitted CSS contains `.md\:flex` and
@@ -1159,12 +1161,12 @@ the fixture assertions must not be weakened.
 Document these exact installation and configuration steps:
 
 ```bash
-npm install -D tailwind-breakpoint-group
+pnpm add -D tailwind-variant-groups
 ```
 
 ```ts
 // next.config.ts
-import { withVariantGroups } from "tailwind-breakpoint-group/next";
+import { withVariantGroups } from "tailwind-variant-groups/next";
 
 export default withVariantGroups({});
 ```
@@ -1173,22 +1175,22 @@ export default withVariantGroups({});
 // postcss.config.mjs
 export default {
   plugins: {
-    "tailwind-breakpoint-group/postcss": {},
+    "tailwind-variant-groups/postcss": {},
     "@tailwindcss/postcss": {},
   },
 };
 ```
 
-Include basic, stacked, nested, arbitrary, and multiline examples; `strict`, `base`, `include`, and `exclude` options; the complete compatibility matrix; the required plugin ordering; the Tailwind raw-scan unused-CSS limitation; and explicit exclusions for Tailwind 3, MDX, utility-prefix groups, and dynamic partial classes. Add the MIT license using `tailwind-breakpoint-group contributors` as the copyright holder.
+Include basic, stacked, nested, arbitrary, and multiline examples; `strict`, `base`, `include`, and `exclude` options; the complete compatibility matrix; the required plugin ordering; the Tailwind raw-scan unused-CSS limitation; and explicit exclusions for Tailwind 3, MDX, utility-prefix groups, and dynamic partial classes. Add the MIT license using `tailwind-variant-groups contributors` as the copyright holder.
 
 - [ ] **Step 5: Run all completion gates and inspect package contents**
 
 Run:
 
 ```bash
-npm run format
-npm run verify
-npm pack --dry-run
+pnpm format
+pnpm verify
+pnpm pack --dry-run
 ```
 
 Expected: formatting, type checking, all Vitest tests, the package build, Turbopack fixture build, Webpack fixture build, and dry-run packing PASS. The pack listing must contain `dist/index`, `dist/next`, `dist/postcss`, `dist/loader.cjs`, declaration files, source maps, `README.md`, and `LICENSE`, and must exclude source tests and fixture output.
@@ -1196,7 +1198,7 @@ Expected: formatting, type checking, all Vitest tests, the package build, Turbop
 - [ ] **Step 6: Commit the verified package**
 
 ```bash
-git add README.md LICENSE tests/fixtures scripts/test-next-fixture.mjs package.json package-lock.json src tests tsup.config.ts
+git add README.md LICENSE tests/fixtures scripts/test-next-fixture.mjs package.json pnpm-lock.yaml src tests tsup.config.ts
 git commit -m "test: verify Next variant groups end to end"
 ```
 
@@ -1208,7 +1210,7 @@ git commit -m "test: verify Next variant groups end to end"
 
 **Interfaces:**
 - Consumes: the complete package from Tasks 1 through 6.
-- Produces: a reproducibly verified npm package working under both supported Next bundlers.
+- Produces: a reproducibly verified package working under both supported Next bundlers.
 
 - [ ] **Step 1: Review the complete diff against the specification**
 
@@ -1226,8 +1228,8 @@ Read the spec and verify each acceptance condition against a named automated tes
 Run:
 
 ```bash
-npm run verify
-npm pack --dry-run
+pnpm verify
+pnpm pack --dry-run
 git diff 9242d30..HEAD --check
 git status --short
 ```

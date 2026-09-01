@@ -4,7 +4,7 @@ Date: 2026-09-01
 
 ## Summary
 
-`tailwind-breakpoint-group` will add UnoCSS-style variant grouping to Tailwind CSS 4 projects using Next.js. Authors will be able to write grouped breakpoint, state, arbitrary, and container variants in JavaScript and TypeScript sources while Tailwind receives ordinary static candidates and React renders ordinary class names.
+`tailwind-variant-groups` will add UnoCSS-style variant grouping to Tailwind CSS 4 projects using Next.js. Authors will be able to write grouped breakpoint, state, arbitrary, and container variants in JavaScript and TypeScript sources while Tailwind receives ordinary static candidates and React renders ordinary class names.
 
 The first release targets Tailwind CSS 4.x, Next.js 15.3 through 16.x, Node.js 20.9 or newer, JavaScript and TypeScript component files, and both Turbopack and Webpack. MDX and utility-prefix grouping are outside the initial scope.
 
@@ -108,7 +108,7 @@ Files are cached by stable file metadata, expanded candidates are deduplicated, 
 Next.js configuration:
 
 ```ts
-import { withVariantGroups } from "tailwind-breakpoint-group/next";
+import { withVariantGroups } from "tailwind-variant-groups/next";
 
 export default withVariantGroups(
   {
@@ -125,7 +125,7 @@ PostCSS configuration:
 ```js
 export default {
   plugins: {
-    "tailwind-breakpoint-group/postcss": {
+    "tailwind-variant-groups/postcss": {
       base: process.cwd(),
       include: ["**/*.{js,jsx,ts,tsx}"],
       exclude: ["node_modules/**", ".next/**", "dist/**", "build/**"],
@@ -155,6 +155,10 @@ The intended modules are:
 - `tests`: unit, integration, and Next.js fixture coverage.
 
 Implementation will use TypeScript. `@babel/parser` will locate static string ranges, `magic-string` will produce edits and source maps, and `fast-glob` will discover PostCSS source files. PostCSS, Next.js, Tailwind CSS, and `@tailwindcss/postcss` will be declared as compatible peer or development dependencies rather than bundled application runtimes.
+
+The repository will use pnpm 11.25.0, commit `pnpm-lock.yaml`, declare the
+package manager in `package.json`, and use pnpm commands in contributor and
+consumer documentation.
 
 ## Compatibility
 
