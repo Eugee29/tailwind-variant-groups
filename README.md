@@ -7,8 +7,20 @@ Tailwind's candidate scanner.
 
 ## Install
 
+Choose your package manager:
+
 ```bash
+# pnpm
 pnpm add -D tailwind-variant-groups
+
+# npm
+npm install --save-dev tailwind-variant-groups
+
+# Yarn
+yarn add --dev tailwind-variant-groups
+
+# Bun
+bun add --dev tailwind-variant-groups
 ```
 
 ## Configure Next.js
