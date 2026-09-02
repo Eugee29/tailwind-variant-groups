@@ -1,6 +1,6 @@
 # tailwind-variant-groups
 
-UnoCSS-style variant groups for Tailwind CSS 4.1–4.x and Next.js 16. Write grouped
+Style variant groups for Tailwind CSS 4.1–4.x and Next.js 16. Write grouped
 responsive and state variants in JavaScript or TypeScript source while the package
 expands them into ordinary static Tailwind class names for both the rendered markup and
 Tailwind's candidate scanner.
