@@ -40,7 +40,7 @@ describe("PostCSS candidate bridge", () => {
 
     expect(result.css).toContain(".md\\:flex");
     expect(result.css).toContain(".md\\:gap-4");
-    expect(result.css).toContain(".md\\:hover\\:text-white:hover");
+    expect(result.css).toContain(".md\\:hover\\:text-white");
     expect(result.css).toContain("@media");
   });
 

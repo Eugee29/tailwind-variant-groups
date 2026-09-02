@@ -4,12 +4,12 @@ Date: 2026-09-01
 
 ## Summary
 
-`tailwind-variant-groups` will add UnoCSS-style variant grouping to Tailwind CSS 4
-projects using Next.js. Authors will be able to write grouped breakpoint, state,
+`tailwind-variant-groups` will add UnoCSS-style variant grouping to Tailwind CSS 4.1–4.x
+projects using Next.js 16. Authors will be able to write grouped breakpoint, state,
 arbitrary, and container variants in JavaScript and TypeScript sources while Tailwind
 receives ordinary static candidates and React renders ordinary class names.
 
-The first release targets Tailwind CSS 4.x, Next.js 15.3 through 16.x, Node.js 20.9 or
+The first release targets Tailwind CSS 4.1.x through 4.x, Next.js 16.x, Node.js 20.9 or
 newer, JavaScript and TypeScript component files, and both Turbopack and Webpack. MDX
 and utility-prefix grouping are outside the initial scope.
 
@@ -124,7 +124,7 @@ variant-group marker return immediately without allocation-heavy parsing.
 
 ### PostCSS integration
 
-The Next.js loader output is not visible to Tailwind because Tailwind 4 scans original
+The Next.js loader output is not visible to Tailwind because Tailwind 4.1 scans original
 files directly from disk. A companion PostCSS plugin therefore uses the same parser to
 scan configured source files and collect expanded candidates.
 
@@ -213,8 +213,8 @@ documentation.
 
 ## Compatibility
 
-- Tailwind CSS: `>=4 <5`
-- Next.js: `>=15.3 <17`
+- Tailwind CSS: `>=4.1 <5`
+- Next.js: `>=16 <17`
 - Node.js: `>=20.9`
 - PostCSS: 8.x
 - Source formats: JavaScript, JSX, TypeScript, and TSX
@@ -235,8 +235,8 @@ verify candidate collection, stable ordering, and source locations.
 - Next wrapper tests assert Turbopack rule merging, Webpack rule insertion, preservation
   of existing callbacks, and use of returned configurations.
 - PostCSS tests process a temporary Tailwind stylesheet and source tree with the real
-  Tailwind 4 PostCSS plugin, then assert that media-query and state CSS is generated for
-  expanded candidates.
+  Tailwind 4.1 PostCSS plugin, then assert that media-query and state CSS is generated
+  for expanded candidates.
 - A minimal Next.js fixture builds with default Turbopack and again with
   `next build --webpack`; both outputs must include and apply the grouped responsive
   styles.
@@ -253,6 +253,6 @@ Next.js, PostCSS, ESM, CommonJS, source map, and declaration entry points are pr
 The work is complete when a supported Next.js project can configure the Next wrapper and
 PostCSS companion, use nested variant groups in JS or TS components, build successfully
 under both Turbopack and Webpack, render expanded class names, and receive the
-corresponding Tailwind 4 CSS. Malformed syntax must report its originating source
+corresponding Tailwind 4.1 CSS. Malformed syntax must report its originating source
 location, ordinary Tailwind classes must continue to work, and existing user bundler
 configuration must remain intact.

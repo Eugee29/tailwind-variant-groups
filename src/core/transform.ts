@@ -27,8 +27,11 @@ export function transformVariantGroups(
   const magicString = new MagicString(source);
   const candidates: string[] = [];
   let changed = false;
+  const ranges = findStaticRanges(source, filename).sort(
+    (left, right) => left.start - right.start,
+  );
 
-  for (const range of findStaticRanges(source, filename)) {
+  for (const range of ranges) {
     const expansion = expandVariantGroupsInText(source.slice(range.start, range.end), {
       filename,
       source,

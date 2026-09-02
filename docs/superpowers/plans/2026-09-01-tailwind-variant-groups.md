@@ -5,8 +5,8 @@
 > to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a package that expands UnoCSS-style variant groups in Next.js JavaScript
-and TypeScript sources and makes the expanded candidates visible to Tailwind CSS 4 under
-both Turbopack and Webpack.
+and TypeScript sources and makes the expanded candidates visible to Tailwind CSS 4.1
+under both Turbopack and Webpack.
 
 **Architecture:** A pure, source-map-aware transformer locates static JavaScript and
 TypeScript string ranges with `@babel/parser`, then expands balanced variant groups
@@ -16,7 +16,7 @@ scans the same files and injects expanded candidates through `@source inline(...
 before Tailwind runs.
 
 **Tech Stack:** TypeScript, `@babel/parser`, `magic-string`, `fast-glob`, PostCSS 8,
-Tailwind CSS 4, Next.js 16 for compatibility fixtures, Vitest, tsup, and Prettier.
+Tailwind CSS 4.1, Next.js 16 for compatibility fixtures, Vitest, tsup, and Prettier.
 
 **Spec:** `docs/superpowers/specs/2026-09-01-tailwind-variant-groups-design.md`
 
@@ -24,8 +24,8 @@ Tailwind CSS 4, Next.js 16 for compatibility fixtures, Vitest, tsup, and Prettie
 
 - Package name: `tailwind-variant-groups`.
 - Package manager: pnpm 11.25.0 with `pnpm-lock.yaml`.
-- Tailwind CSS compatibility: `>=4 <5`; Tailwind CSS 3 is unsupported.
-- Next.js compatibility: `>=15.3 <17`.
+- Tailwind CSS compatibility: `>=4.1 <5`; Tailwind CSS 3 is unsupported.
+- Next.js compatibility: `>=16 <17`.
 - Node.js compatibility: `>=20.9`.
 - PostCSS compatibility: 8.x.
 - Transform only `.js`, `.jsx`, `.ts`, and `.tsx` sources; MDX is unsupported.
@@ -64,7 +64,7 @@ Tailwind CSS 4, Next.js 16 for compatibility fixtures, Vitest, tsup, and Prettie
   source-map tests.
 - `tests/loader.test.ts`: loader fast path, options, maps, and errors.
 - `tests/next.test.ts`: Turbopack and Webpack configuration merging.
-- `tests/postcss.test.ts`: real Tailwind 4 PostCSS generation and scanner cache
+- `tests/postcss.test.ts`: real Tailwind 4.1 PostCSS generation and scanner cache
   behavior.
 - `tests/fixtures/next-app/*`: minimal Next application using grouped classes.
 - `scripts/test-next-fixture.mjs`: Turbopack and Webpack fixture build runner and
@@ -103,7 +103,7 @@ afterward so pnpm records the resolved compatible dependency versions in both fi
 {
   "name": "tailwind-variant-groups",
   "version": "0.1.0",
-  "description": "UnoCSS-style variant groups for Tailwind CSS 4 and Next.js",
+  "description": "UnoCSS-style variant groups for Tailwind CSS 4.1–4.x and Next.js 16",
   "type": "module",
   "packageManager": "pnpm@11.25.0",
   "sideEffects": false,
@@ -152,13 +152,13 @@ afterward so pnpm records the resolved compatible dependency versions in both fi
     "magic-string": "^0.30.18"
   },
   "peerDependencies": {
-    "@tailwindcss/postcss": ">=4 <5",
-    "next": ">=15.3 <17",
+    "@tailwindcss/postcss": ">=4.1 <5",
+    "next": ">=16 <17",
     "postcss": "^8.4.0",
-    "tailwindcss": ">=4 <5"
+    "tailwindcss": ">=4.1 <5"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.0",
+    "@tailwindcss/postcss": "4.1.0",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
@@ -167,7 +167,7 @@ afterward so pnpm records the resolved compatible dependency versions in both fi
     "prettier": "^3.6.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "tailwindcss": "^4.3.0",
+    "tailwindcss": "4.1.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.0",
     "vitest": "^4.0.0"
@@ -859,7 +859,7 @@ git add src/next.ts tests/next.test.ts
 git commit -m "feat: configure Turbopack and Webpack transforms"
 ```
 
-### Task 5: Tailwind CSS 4 PostCSS Candidate Bridge
+### Task 5: Tailwind CSS 4.1 PostCSS Candidate Bridge
 
 **Files:**
 

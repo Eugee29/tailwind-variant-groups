@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { withVariantGroups } from "../src/next.js";
 
 describe("withVariantGroups", () => {
-  it("prepends a non-foreign JS/TS Turbopack rule and preserves star rules", () => {
+  it("prepends the exact Next 16 non-foreign JS/TS condition and preserves star rules", () => {
     const existing = { loaders: ["existing-loader"] };
     const config = withVariantGroups({
       turbopack: { rules: { "*": existing, "*.svg": { loaders: ["svg"] } } },
@@ -10,15 +10,27 @@ describe("withVariantGroups", () => {
 
     expect(config.turbopack?.rules?.["*.svg"]).toEqual({ loaders: ["svg"] });
     expect(config.turbopack?.rules?.["*"]).toEqual([
-      expect.objectContaining({
-        condition: expect.any(Object),
+      {
+        condition: {
+          all: [
+            { not: "foreign" },
+            {
+              any: [
+                { path: "*.js" },
+                { path: "*.jsx" },
+                { path: "*.ts" },
+                { path: "*.tsx" },
+              ],
+            },
+          ],
+        },
         loaders: [
           expect.objectContaining({
             loader: expect.stringMatching(/loader\.cjs$/),
             options: { strict: true },
           }),
         ],
-      }),
+      },
       existing,
     ]);
   });

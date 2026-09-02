@@ -30,6 +30,14 @@ describe("transformVariantGroups", () => {
     );
   });
 
+  it("processes template quasis and expression strings in source order", () => {
+    const source = 'const c = `md:(flex) ${"hover:(underline)"} lg:(grid)`';
+    const result = transformVariantGroups(source, { filename: "classes.ts" });
+
+    expect(result.code).toContain('`md:flex ${"hover:underline"} lg:grid`');
+    expect(result.candidates).toEqual(["md:flex", "hover:underline", "lg:grid"]);
+  });
+
   it("rejects a group that crosses template interpolation", () => {
     const source = "const c = `md:(bg-${color})`";
     expect(() =>
