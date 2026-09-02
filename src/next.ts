@@ -6,14 +6,10 @@ export interface NextVariantGroupOptions {
   strict?: boolean;
 }
 
-type TurbopackRules = NonNullable<
-  NonNullable<NextConfig["turbopack"]>["rules"]
->;
+type TurbopackRules = NonNullable<NonNullable<NextConfig["turbopack"]>["rules"]>;
 
 const moduleUrl =
-  typeof __filename === "string"
-    ? pathToFileURL(__filename).href
-    : import.meta.url;
+  typeof __filename === "string" ? pathToFileURL(__filename).href : import.meta.url;
 const loaderPath = fileURLToPath(new URL("./loader.cjs", moduleUrl));
 
 export function withVariantGroups(
@@ -21,8 +17,7 @@ export function withVariantGroups(
   options?: NextVariantGroupOptions,
 ): NextConfig {
   const strict = options?.strict ?? true;
-  const loaderOptions = { strict } satisfies LoaderOptions &
-    Record<string, boolean>;
+  const loaderOptions = { strict } satisfies LoaderOptions & Record<string, boolean>;
   const { turbopack, webpack: userWebpack, ...rest } = nextConfig;
   const existingRules = turbopack?.rules ?? {};
   const existingStarRule = existingRules["*"];
@@ -47,9 +42,7 @@ export function withVariantGroups(
     "*": existingStarRule
       ? [
           turbopackRule,
-          ...(Array.isArray(existingStarRule)
-            ? existingStarRule
-            : [existingStarRule]),
+          ...(Array.isArray(existingStarRule) ? existingStarRule : [existingStarRule]),
         ]
       : turbopackRule,
   };

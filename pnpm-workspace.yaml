@@ -1,2 +1,5 @@
+packages:
+  - "tests/fixtures/next-app"
+
 allowBuilds:
   esbuild: true

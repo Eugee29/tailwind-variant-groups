@@ -1,0 +1,8 @@
+{
+  "name": "tailwind-variant-groups-next-fixture",
+  "private": true,
+  "version": "0.0.0",
+  "devDependencies": {
+    "tailwind-variant-groups": "workspace:*"
+  }
+}

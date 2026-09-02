@@ -1,12 +1,22 @@
 # Tailwind Variant Groups Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use
+> superpowers:subagent-driven-development (recommended) or superpowers:executing-plans
+> to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a package that expands UnoCSS-style variant groups in Next.js JavaScript and TypeScript sources and makes the expanded candidates visible to Tailwind CSS 4 under both Turbopack and Webpack.
+**Goal:** Build a package that expands UnoCSS-style variant groups in Next.js JavaScript
+and TypeScript sources and makes the expanded candidates visible to Tailwind CSS 4 under
+both Turbopack and Webpack.
 
-**Architecture:** A pure, source-map-aware transformer locates static JavaScript and TypeScript string ranges with `@babel/parser`, then expands balanced variant groups within those ranges. A shared webpack-compatible loader rewrites Next.js modules, a Next config wrapper installs that loader for Turbopack and Webpack, and a PostCSS companion scans the same files and injects expanded candidates through `@source inline(...)` before Tailwind runs.
+**Architecture:** A pure, source-map-aware transformer locates static JavaScript and
+TypeScript string ranges with `@babel/parser`, then expands balanced variant groups
+within those ranges. A shared webpack-compatible loader rewrites Next.js modules, a Next
+config wrapper installs that loader for Turbopack and Webpack, and a PostCSS companion
+scans the same files and injects expanded candidates through `@source inline(...)`
+before Tailwind runs.
 
-**Tech Stack:** TypeScript, `@babel/parser`, `magic-string`, `fast-glob`, PostCSS 8, Tailwind CSS 4, Next.js 16 for compatibility fixtures, Vitest, tsup, and Prettier.
+**Tech Stack:** TypeScript, `@babel/parser`, `magic-string`, `fast-glob`, PostCSS 8,
+Tailwind CSS 4, Next.js 16 for compatibility fixtures, Vitest, tsup, and Prettier.
 
 **Spec:** `docs/superpowers/specs/2026-09-01-tailwind-variant-groups-design.md`
 
@@ -19,7 +29,8 @@
 - Node.js compatibility: `>=20.9`.
 - PostCSS compatibility: 8.x.
 - Transform only `.js`, `.jsx`, `.ts`, and `.tsx` sources; MDX is unsupported.
-- Support variant groups only; utility-prefix grouping such as `font-(bold mono)` must remain unchanged.
+- Support variant groups only; utility-prefix grouping such as `font-(bold mono)` must
+  remain unchanged.
 - Support both Turbopack and Webpack without replacing Next.js's SWC compiler.
 - Publish ESM and CommonJS entry points and TypeScript declarations.
 - Strict mode defaults to `true`; malformed groups report filename, line, and column.
@@ -36,26 +47,36 @@
 - `prettier.config.mjs`: repository formatting rules.
 - `.gitignore`: dependency, build, fixture-output, and coverage exclusions.
 - `src/core/error.ts`: `VariantGroupSyntaxError` and source-location calculation.
-- `src/core/expand-text.ts`: balanced variant-group grammar and recursive prefix expansion for one static string range.
-- `src/core/static-ranges.ts`: Babel parsing and discovery of transformable string/template ranges.
-- `src/core/transform.ts`: source edits, candidate collection, fast path, and source-map production.
+- `src/core/expand-text.ts`: balanced variant-group grammar and recursive prefix
+  expansion for one static string range.
+- `src/core/static-ranges.ts`: Babel parsing and discovery of transformable
+  string/template ranges.
+- `src/core/transform.ts`: source edits, candidate collection, fast path, and source-map
+  production.
 - `src/index.ts`: public core exports and types.
 - `src/loader.ts`: webpack-compatible loader used by Turbopack and Webpack.
 - `src/next.ts`: `withVariantGroups()` and non-destructive Next config merging.
-- `src/postcss.ts`: source discovery/cache and `@source inline(...)` candidate injection.
-- `tests/core/expand-text.test.ts`: grammar, nesting, arbitrary syntax, strictness, and location tests.
-- `tests/core/transform.test.ts`: JS/TS/JSX/TSX range selection, interpolation, and source-map tests.
+- `src/postcss.ts`: source discovery/cache and `@source inline(...)` candidate
+  injection.
+- `tests/core/expand-text.test.ts`: grammar, nesting, arbitrary syntax, strictness, and
+  location tests.
+- `tests/core/transform.test.ts`: JS/TS/JSX/TSX range selection, interpolation, and
+  source-map tests.
 - `tests/loader.test.ts`: loader fast path, options, maps, and errors.
 - `tests/next.test.ts`: Turbopack and Webpack configuration merging.
-- `tests/postcss.test.ts`: real Tailwind 4 PostCSS generation and scanner cache behavior.
+- `tests/postcss.test.ts`: real Tailwind 4 PostCSS generation and scanner cache
+  behavior.
 - `tests/fixtures/next-app/*`: minimal Next application using grouped classes.
-- `scripts/test-next-fixture.mjs`: Turbopack and Webpack fixture build runner and artifact assertions.
-- `README.md`: installation, configuration, syntax, options, compatibility, and limitations.
+- `scripts/test-next-fixture.mjs`: Turbopack and Webpack fixture build runner and
+  artifact assertions.
+- `README.md`: installation, configuration, syntax, options, compatibility, and
+  limitations.
 - `LICENSE`: MIT license attributed to project contributors.
 
 ### Task 1: Package Foundation and Balanced Group Grammar
 
 **Files:**
+
 - Create: `package.json`
 - Create: `pnpm-lock.yaml`
 - Create: `tsconfig.json`
@@ -68,12 +89,15 @@
 - Test: `tests/core/expand-text.test.ts`
 
 **Interfaces:**
+
 - Consumes: no earlier implementation tasks.
-- Produces: `VariantGroupSyntaxError`, `ExpandTextOptions`, `TextExpansion`, and `expandVariantGroupsInText(text, options)` for Task 2.
+- Produces: `VariantGroupSyntaxError`, `ExpandTextOptions`, `TextExpansion`, and
+  `expandVariantGroupsInText(text, options)` for Task 2.
 
 - [ ] **Step 1: Add package and tool configuration**
 
-Create `package.json` with the following stable public shape; use `pnpm install` afterward so pnpm records the resolved compatible dependency versions in both files:
+Create `package.json` with the following stable public shape; use `pnpm install`
+afterward so pnpm records the resolved compatible dependency versions in both files:
 
 ```json
 {
@@ -271,10 +295,7 @@ import { expandVariantGroupsInText } from "../../src/core/expand-text.js";
 describe("expandVariantGroupsInText", () => {
   it.each([
     ["md:(flex gap-4)", "md:flex md:gap-4"],
-    [
-      "md:hover:(bg-blue-500 text-white)",
-      "md:hover:bg-blue-500 md:hover:text-white",
-    ],
+    ["md:hover:(bg-blue-500 text-white)", "md:hover:bg-blue-500 md:hover:text-white"],
     [
       "md:(flex hover:(underline text-blue-500))",
       "md:flex md:hover:underline md:hover:text-blue-500",
@@ -311,9 +332,9 @@ describe("expandVariantGroupsInText", () => {
   });
 
   it("leaves malformed syntax unchanged when strict is false", () => {
-    expect(
-      expandVariantGroupsInText("md:(flex", { strict: false }).code,
-    ).toBe("md:(flex");
+    expect(expandVariantGroupsInText("md:(flex", { strict: false }).code).toBe(
+      "md:(flex",
+    );
   });
 });
 ```
@@ -353,7 +374,10 @@ export function expandVariantGroupsInText(
 ): TextExpansion;
 ```
 
-Implement `VariantGroupSyntaxError` in `src/core/error.ts` with `filename`, zero-based `index`, one-based `line`, and one-based `column`. Calculate location from `options.source ?? text` and `options.offset ?? 0` so later AST-range errors point into the original module.
+Implement `VariantGroupSyntaxError` in `src/core/error.ts` with `filename`, zero-based
+`index`, one-based `line`, and one-based `column`. Calculate location from
+`options.source ?? text` and `options.offset ?? 0` so later AST-range errors point into
+the original module.
 
 In `expand-text.ts`, implement these focused helpers:
 
@@ -370,7 +394,15 @@ function splitTopLevelUtilities(body: string): string[];
 function expandSequence(body: string, inheritedPrefix: string): string[];
 ```
 
-`tryParseGroup` must start only at the beginning of the range or after whitespace, scan through bracketed/quoted arbitrary syntax, and recognize an unbracketed `:(` opener. `findGroupEnd` must balance parentheses, square brackets, curly braces, quotes, and backslash escapes. `splitTopLevelUtilities` must split only on whitespace at balance depth zero. `expandSequence` recursively expands a token that is entirely a nested group; otherwise it prepends the accumulated prefix to the leaf token. If a recognized opener is unterminated, throw in strict mode and copy the original remainder in non-strict mode. If the range ends at a template interpolation, use the message `Variant groups cannot cross a template interpolation`.
+`tryParseGroup` must start only at the beginning of the range or after whitespace, scan
+through bracketed/quoted arbitrary syntax, and recognize an unbracketed `:(` opener.
+`findGroupEnd` must balance parentheses, square brackets, curly braces, quotes, and
+backslash escapes. `splitTopLevelUtilities` must split only on whitespace at balance
+depth zero. `expandSequence` recursively expands a token that is entirely a nested
+group; otherwise it prepends the accumulated prefix to the leaf token. If a recognized
+opener is unterminated, throw in strict mode and copy the original remainder in
+non-strict mode. If the range ends at a template interpolation, use the message
+`Variant groups cannot cross a template interpolation`.
 
 - [ ] **Step 5: Run grammar tests and type checking**
 
@@ -393,14 +425,18 @@ git commit -m "feat: parse nested Tailwind variant groups"
 ### Task 2: Static JS/TS Source Transformation
 
 **Files:**
+
 - Create: `src/core/static-ranges.ts`
 - Create: `src/core/transform.ts`
 - Create: `src/index.ts`
 - Test: `tests/core/transform.test.ts`
 
 **Interfaces:**
-- Consumes: `expandVariantGroupsInText(text, options)` and `VariantGroupSyntaxError` from Task 1.
-- Produces: `TransformOptions`, `TransformResult`, and `transformVariantGroups(source, options)` for the loader and PostCSS tasks.
+
+- Consumes: `expandVariantGroupsInText(text, options)` and `VariantGroupSyntaxError`
+  from Task 1.
+- Produces: `TransformOptions`, `TransformResult`, and
+  `transformVariantGroups(source, options)` for the loader and PostCSS tasks.
 
 - [ ] **Step 1: Write failing source-transformation tests**
 
@@ -408,10 +444,7 @@ Create `tests/core/transform.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
-import {
-  transformVariantGroups,
-  VariantGroupSyntaxError,
-} from "../../src/index.js";
+import { transformVariantGroups, VariantGroupSyntaxError } from "../../src/index.js";
 
 describe("transformVariantGroups", () => {
   it("transforms static strings in TSX and leaves executable syntax alone", () => {
@@ -431,19 +464,15 @@ describe("transformVariantGroups", () => {
     );
     expect(result.code).toContain('from "md:(do not transform)"');
     expect(result.code).toContain("// md:(comment content)");
-    expect(result.candidates).toEqual([
-      "md:flex",
-      "md:gap-4",
-      "md:hover:text-white",
-    ]);
+    expect(result.candidates).toEqual(["md:flex", "md:gap-4", "md:hover:text-white"]);
     expect(result.map).not.toBeNull();
   });
 
   it("supports groups wholly contained in template segments", () => {
     const source = "const c = `base ${active ? 'on' : 'off'} md:(flex gap-4)`";
-    expect(
-      transformVariantGroups(source, { filename: "classes.ts" }).code,
-    ).toContain("md:flex md:gap-4");
+    expect(transformVariantGroups(source, { filename: "classes.ts" }).code).toContain(
+      "md:flex md:gap-4",
+    );
   });
 
   it("rejects a group that crosses template interpolation", () => {
@@ -455,9 +484,7 @@ describe("transformVariantGroups", () => {
 
   it("uses the marker fast path before parsing", () => {
     const invalidJavaScript = "const = ordinary-class";
-    expect(transformVariantGroups(invalidJavaScript).code).toBe(
-      invalidJavaScript,
-    );
+    expect(transformVariantGroups(invalidJavaScript).code).toBe(invalidJavaScript);
   });
 
   it("is idempotent", () => {
@@ -493,7 +520,15 @@ export interface StaticRange {
 export function findStaticRanges(source: string, filename: string): StaticRange[];
 ```
 
-Parse with `sourceType: "unambiguous"`. Enable `jsx` for `.js`/`.jsx`/`.tsx` and `typescript` for `.ts`/`.tsx`; include `decorators-legacy` and `importAttributes`. Walk the AST recursively without `@babel/traverse`, passing parent and property key. Collect the raw content range inside `StringLiteral` quotes and the raw range for each `TemplateElement`. Skip module-source strings owned by import declarations, export declarations, `ImportExpression`, or a dynamic-import `CallExpression` whose callee type is `Import`. Do not collect comments, regex literals, directives, or other executable syntax. Set `interpolationAfter` to `true` for a template element whose `tail` flag is false.
+Parse with `sourceType: "unambiguous"`. Enable `jsx` for `.js`/`.jsx`/`.tsx` and
+`typescript` for `.ts`/`.tsx`; include `decorators-legacy` and `importAttributes`. Walk
+the AST recursively without `@babel/traverse`, passing parent and property key. Collect
+the raw content range inside `StringLiteral` quotes and the raw range for each
+`TemplateElement`. Skip module-source strings owned by import declarations, export
+declarations, `ImportExpression`, or a dynamic-import `CallExpression` whose callee type
+is `Import`. Do not collect comments, regex literals, directives, or other executable
+syntax. Set `interpolationAfter` to `true` for a template element whose `tail` flag is
+false.
 
 - [ ] **Step 4: Implement the public source transformer**
 
@@ -521,7 +556,12 @@ export function transformVariantGroups(
 ): TransformResult;
 ```
 
-Return immediately with the original code, no candidates, `changed: false`, and `map: null` when `source.includes(":(")` is false. Otherwise, call `findStaticRanges`, expand each range with its original-source offset and interpolation boundary, and apply changed ranges through `MagicString.overwrite`. Deduplicate candidates while preserving first-seen order. Generate a high-resolution source map with the filename when `sourceMap !== false`; otherwise return `null`.
+Return immediately with the original code, no candidates, `changed: false`, and
+`map: null` when `source.includes(":(")` is false. Otherwise, call `findStaticRanges`,
+expand each range with its original-source offset and interpolation boundary, and apply
+changed ranges through `MagicString.overwrite`. Deduplicate candidates while preserving
+first-seen order. Generate a high-resolution source map with the filename when
+`sourceMap !== false`; otherwise return `null`.
 
 Export the transformer, types, and `VariantGroupSyntaxError` from `src/index.ts`.
 
@@ -546,12 +586,16 @@ git commit -m "feat: transform static JavaScript class strings"
 ### Task 3: Shared Next.js Source Loader
 
 **Files:**
+
 - Create: `src/loader.ts`
 - Test: `tests/loader.test.ts`
 
 **Interfaces:**
-- Consumes: `transformVariantGroups(source, { filename, strict, sourceMap })` from Task 2.
-- Produces: a default CommonJS-compatible webpack loader accepting `{ strict?: boolean }` for Task 4.
+
+- Consumes: `transformVariantGroups(source, { filename, strict, sourceMap })` from
+  Task 2.
+- Produces: a default CommonJS-compatible webpack loader accepting
+  `{ strict?: boolean }` for Task 4.
 
 - [ ] **Step 1: Write failing loader tests**
 
@@ -640,7 +684,11 @@ export default function variantGroupLoader(
 ): void;
 ```
 
-Call `cacheable(true)`, read options from `getOptions()` with `query` as a compatibility fallback, and invoke `transformVariantGroups` with `resourcePath`. On the unchanged path, return the original source and incoming map. On change, return transformed code and the generated map. Catch unknown errors, normalize non-`Error` values to `Error(String(value))`, and pass the error as the callback's first argument.
+Call `cacheable(true)`, read options from `getOptions()` with `query` as a compatibility
+fallback, and invoke `transformVariantGroups` with `resourcePath`. On the unchanged
+path, return the original source and incoming map. On change, return transformed code
+and the generated map. Catch unknown errors, normalize non-`Error` values to
+`Error(String(value))`, and pass the error as the callback's first argument.
 
 - [ ] **Step 4: Run loader and core tests**
 
@@ -674,16 +722,20 @@ git commit -m "feat: add shared Next source loader"
 ### Task 4: Next.js Turbopack and Webpack Configuration Wrapper
 
 **Files:**
+
 - Create: `src/next.ts`
 - Test: `tests/next.test.ts`
 
 **Interfaces:**
+
 - Consumes: the built loader filename `loader.cjs` and `LoaderOptions` from Task 3.
-- Produces: `withVariantGroups(nextConfig?, options?)` exported from `tailwind-variant-groups/next`.
+- Produces: `withVariantGroups(nextConfig?, options?)` exported from
+  `tailwind-variant-groups/next`.
 
 - [ ] **Step 1: Write failing config-merging tests**
 
-Create `tests/next.test.ts` with a Turbopack rule preservation case and a Webpack callback return-value case:
+Create `tests/next.test.ts` with a Turbopack rule preservation case and a Webpack
+callback return-value case:
 
 ```ts
 import { describe, expect, it, vi } from "vitest";
@@ -757,13 +809,22 @@ export function withVariantGroups(
 ): NextConfig;
 ```
 
-Resolve `loader.cjs` next to the built `next` entry. Use `typeof __filename === "string"` plus `pathToFileURL(__filename)` for CJS and `import.meta.url` for ESM, then `fileURLToPath(new URL("./loader.cjs", moduleUrl))`. This keeps the path valid in both package exports.
+Resolve `loader.cjs` next to the built `next` entry. Use
+`typeof __filename === "string"` plus `pathToFileURL(__filename)` for CJS and
+`import.meta.url` for ESM, then `fileURLToPath(new URL("./loader.cjs", moduleUrl))`.
+This keeps the path valid in both package exports.
 
-Create one Turbopack `"*"` rule with an `all` condition containing `{ not: "foreign" }` and an `any` condition for `*.js`, `*.jsx`, `*.ts`, and `*.tsx`. Pass only the primitive loader option `{ strict: options?.strict ?? true }`. If an existing `"*"` rule exists, normalize it to an array and place the new rule first. Spread every other existing `turbopack` option and rule unchanged.
+Create one Turbopack `"*"` rule with an `all` condition containing `{ not: "foreign" }`
+and an `any` condition for `*.js`, `*.jsx`, `*.ts`, and `*.tsx`. Pass only the primitive
+loader option `{ strict: options?.strict ?? true }`. If an existing `"*"` rule exists,
+normalize it to an array and place the new rule first. Spread every other existing
+`turbopack` option and rule unchanged.
 
 - [ ] **Step 4: Implement Webpack callback preservation**
 
-Capture `nextConfig.webpack`. The wrapped callback must first call the user's function when present, use its return value when defined, then unshift this rule into `result.module.rules`:
+Capture `nextConfig.webpack`. The wrapped callback must first call the user's function
+when present, use its return value when defined, then unshift this rule into
+`result.module.rules`:
 
 ```ts
 {
@@ -774,7 +835,8 @@ Capture `nextConfig.webpack`. The wrapped callback must first call the user's fu
 }
 ```
 
-Always return the resulting config. Do not mutate the original `nextConfig` object or remove unrelated properties.
+Always return the resulting config. Do not mutate the original `nextConfig` object or
+remove unrelated properties.
 
 - [ ] **Step 5: Run wrapper tests, build, and exercise both module formats**
 
@@ -800,11 +862,14 @@ git commit -m "feat: configure Turbopack and Webpack transforms"
 ### Task 5: Tailwind CSS 4 PostCSS Candidate Bridge
 
 **Files:**
+
 - Create: `src/postcss.ts`
 - Test: `tests/postcss.test.ts`
 
 **Interfaces:**
-- Consumes: `transformVariantGroups(source, { filename, strict, sourceMap: false })` from Task 2.
+
+- Consumes: `transformVariantGroups(source, { filename, strict, sourceMap: false })`
+  from Task 2.
 - Produces: a PostCSS 8 plugin creator exported from `tailwind-variant-groups/postcss`.
 
 - [ ] **Step 1: Write failing PostCSS integration tests**
@@ -824,9 +889,9 @@ const temporaryRoots: string[] = [];
 
 afterEach(async () => {
   await Promise.all(
-    temporaryRoots.splice(0).map((root) =>
-      fs.rm(root, { recursive: true, force: true }),
-    ),
+    temporaryRoots
+      .splice(0)
+      .map((root) => fs.rm(root, { recursive: true, force: true })),
   );
 });
 
@@ -862,7 +927,8 @@ describe("PostCSS candidate bridge", () => {
 });
 ```
 
-Add this cache, glob, ordering, and strict-error coverage using the same temporary-root helper:
+Add this cache, glob, ordering, and strict-error coverage using the same temporary-root
+helper:
 
 ```ts
 it("honors globs, sorts candidates, and invalidates changed files", async () => {
@@ -956,11 +1022,18 @@ const DEFAULT_EXCLUDE = [
 ];
 ```
 
-Resolve `base` from the option or `process.cwd()`. Discover absolute, file-only paths with `fast-glob`. Cache `{ mtimeMs, size, candidates }` by absolute filename. Re-read and re-transform only when metadata changes. Remove cache entries for files no longer returned by the current scan. Merge all candidates into a `Set`, then sort with `localeCompare` for deterministic output.
+Resolve `base` from the option or `process.cwd()`. Discover absolute, file-only paths
+with `fast-glob`. Cache `{ mtimeMs, size, candidates }` by absolute filename. Re-read
+and re-transform only when metadata changes. Remove cache entries for files no longer
+returned by the current scan. Merge all candidates into a `Set`, then sort with
+`localeCompare` for deterministic output.
 
 - [ ] **Step 4: Inject candidates and dependency messages**
 
-Return a PostCSS plugin object with `postcssPlugin: "tailwind-variant-groups"` and an async `Once` hook. First find an `@import` whose params begin with `"tailwindcss"` or `'tailwindcss'`; return without scanning when absent. When candidates exist, create exactly one at-rule:
+Return a PostCSS plugin object with `postcssPlugin: "tailwind-variant-groups"` and an
+async `Once` hook. First find an `@import` whose params begin with `"tailwindcss"` or
+`'tailwindcss'`; return without scanning when absent. When candidates exist, create
+exactly one at-rule:
 
 ```ts
 postcss.atRule({
@@ -969,7 +1042,11 @@ postcss.atRule({
 });
 ```
 
-Insert it immediately after the Tailwind import so the later Tailwind PostCSS plugin consumes it. Add a PostCSS `dependency` result message for every matched source file and a `dir-dependency` message containing the base directory and include globs so new files trigger rebuilds in compatible runners. Export `variantGroups.postcss = true` for PostCSS configuration loading.
+Insert it immediately after the Tailwind import so the later Tailwind PostCSS plugin
+consumes it. Add a PostCSS `dependency` result message for every matched source file and
+a `dir-dependency` message containing the base directory and include globs so new files
+trigger rebuilds in compatible runners. Export `variantGroups.postcss = true` for
+PostCSS configuration loading.
 
 - [ ] **Step 5: Run the real Tailwind integration and complete suite**
 
@@ -981,7 +1058,8 @@ pnpm test
 pnpm typecheck
 ```
 
-Expected: all commands PASS; the generated CSS contains the responsive and nested selectors.
+Expected: all commands PASS; the generated CSS contains the responsive and nested
+selectors.
 
 - [ ] **Step 6: Commit the PostCSS bridge**
 
@@ -993,6 +1071,7 @@ git commit -m "feat: bridge grouped candidates into Tailwind"
 ### Task 6: Package Documentation and Dual-Bundler Next.js Fixture
 
 **Files:**
+
 - Create: `README.md`
 - Create: `LICENSE`
 - Create: `tests/fixtures/next-app/package.json`
@@ -1005,12 +1084,16 @@ git commit -m "feat: bridge grouped candidates into Tailwind"
 - Modify: `package.json`
 
 **Interfaces:**
+
 - Consumes: all package exports from Tasks 2 through 5.
-- Produces: documented setup and an end-to-end compatibility gate for Turbopack and Webpack.
+- Produces: documented setup and an end-to-end compatibility gate for Turbopack and
+  Webpack.
 
 - [ ] **Step 1: Create the dual-bundler fixture runner**
 
-Create `scripts/test-next-fixture.mjs` with helpers that resolve the package exports, clear only the fixture's `.next` and `out` directories, spawn Next with telemetry disabled, and inspect output files:
+Create `scripts/test-next-fixture.mjs` with helpers that resolve the package exports,
+clear only the fixture's `.next` and `out` directories, spawn Next with telemetry
+disabled, and inspect output files:
 
 ```js
 import assert from "node:assert/strict";
@@ -1151,10 +1234,9 @@ Run:
 pnpm test:next
 ```
 
-Expected: both builds PASS, emitted CSS contains `.md\:flex` and
-`.md\:gap-4`, server output contains `md:flex`, and no server artifact
-contains `md:(flex`. A failure returns implementation to the owning task;
-the fixture assertions must not be weakened.
+Expected: both builds PASS, emitted CSS contains `.md\:flex` and `.md\:gap-4`, server
+output contains `md:flex`, and no server artifact contains `md:(flex`. A failure returns
+implementation to the owning task; the fixture assertions must not be weakened.
 
 - [ ] **Step 4: Write README and license**
 
@@ -1181,7 +1263,11 @@ export default {
 };
 ```
 
-Include basic, stacked, nested, arbitrary, and multiline examples; `strict`, `base`, `include`, and `exclude` options; the complete compatibility matrix; the required plugin ordering; the Tailwind raw-scan unused-CSS limitation; and explicit exclusions for Tailwind 3, MDX, utility-prefix groups, and dynamic partial classes. Add the MIT license using `tailwind-variant-groups contributors` as the copyright holder.
+Include basic, stacked, nested, arbitrary, and multiline examples; `strict`, `base`,
+`include`, and `exclude` options; the complete compatibility matrix; the required plugin
+ordering; the Tailwind raw-scan unused-CSS limitation; and explicit exclusions for
+Tailwind 3, MDX, utility-prefix groups, and dynamic partial classes. Add the MIT license
+using `tailwind-variant-groups contributors` as the copyright holder.
 
 - [ ] **Step 5: Run all completion gates and inspect package contents**
 
@@ -1193,7 +1279,11 @@ pnpm verify
 pnpm pack --dry-run
 ```
 
-Expected: formatting, type checking, all Vitest tests, the package build, Turbopack fixture build, Webpack fixture build, and dry-run packing PASS. The pack listing must contain `dist/index`, `dist/next`, `dist/postcss`, `dist/loader.cjs`, declaration files, source maps, `README.md`, and `LICENSE`, and must exclude source tests and fixture output.
+Expected: formatting, type checking, all Vitest tests, the package build, Turbopack
+fixture build, Webpack fixture build, and dry-run packing PASS. The pack listing must
+contain `dist/index`, `dist/next`, `dist/postcss`, `dist/loader.cjs`, declaration files,
+source maps, `README.md`, and `LICENSE`, and must exclude source tests and fixture
+output.
 
 - [ ] **Step 6: Commit the verified package**
 
@@ -1205,10 +1295,12 @@ git commit -m "test: verify Next variant groups end to end"
 ### Task 7: Final Review and Release Readiness
 
 **Files:**
+
 - No source changes expected.
 - Test: all commands in the package verification gate.
 
 **Interfaces:**
+
 - Consumes: the complete package from Tasks 1 through 6.
 - Produces: a reproducibly verified package working under both supported Next bundlers.
 
@@ -1221,7 +1313,10 @@ git diff 9242d30..HEAD --check
 git diff 9242d30..HEAD --stat
 ```
 
-Read the spec and verify each acceptance condition against a named automated test. Pay particular attention to malformed source locations, nested prefix accumulation, template interpolation boundaries, existing Webpack callback return values, existing Turbopack star rules, PostCSS ordering, and ESM/CommonJS loader resolution.
+Read the spec and verify each acceptance condition against a named automated test. Pay
+particular attention to malformed source locations, nested prefix accumulation, template
+interpolation boundaries, existing Webpack callback return values, existing Turbopack
+star rules, PostCSS ordering, and ESM/CommonJS loader resolution.
 
 - [ ] **Step 2: Run the clean final verification**
 
@@ -1234,6 +1329,6 @@ git diff 9242d30..HEAD --check
 git status --short
 ```
 
-Expected: verification and dry-run packing exit zero, the diff check prints no
-errors, and `git status --short` is clean. Record the passing commands and the
-Turbopack/Webpack build results in the implementation handoff.
+Expected: verification and dry-run packing exit zero, the diff check prints no errors,
+and `git status --short` is clean. Record the passing commands and the Turbopack/Webpack
+build results in the implementation handoff.

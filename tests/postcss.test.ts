@@ -135,6 +135,25 @@ describe("PostCSS candidate bridge", () => {
     ]);
   });
 
+  it("emits native absolute file dependency paths", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "variant-groups-"));
+    temporaryRoots.push(root);
+    await fs.mkdir(path.join(root, "app"));
+    const page = path.join(root, "app/page.tsx");
+    await fs.writeFile(page, '<div className="md:(flex)" />');
+
+    const result = await postcss([variantGroups({ base: root })]).process(
+      '@import "tailwindcss";',
+      { from: path.join(root, "app.css") },
+    );
+
+    expect(result.messages.find((message) => message.type === "dependency")).toEqual({
+      type: "dependency",
+      plugin: "tailwind-variant-groups",
+      file: path.normalize(page),
+    });
+  });
+
   it("ignores unsupported files even when custom globs include them", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "variant-groups-"));
     temporaryRoots.push(root);

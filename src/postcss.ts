@@ -60,7 +60,9 @@ const variantGroups: PluginCreator<PostcssVariantGroupOptions> = (options = {}) 
           ignore: exclude,
           onlyFiles: true,
         })
-      ).filter((filename) => SUPPORTED_EXTENSIONS.has(path.extname(filename)));
+      )
+        .map((filename) => path.normalize(filename))
+        .filter((filename) => SUPPORTED_EXTENSIONS.has(path.extname(filename)));
       const matchedFiles = new Set(files);
       for (const filename of candidateCache.keys()) {
         if (!matchedFiles.has(filename)) candidateCache.delete(filename);
