@@ -34,20 +34,21 @@
       "require": "./dist/postcss.cjs"
     },
     "./loader": {
-      "types": "./dist/loader.d.ts",
+      "types": "./dist/loader.d.cts",
       "require": "./dist/loader.cjs",
       "default": "./dist/loader.cjs"
     }
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup --config tsup.config.ts && tsup --config tsup.loader.config.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:package": "pnpm build && node scripts/test-package-types.mjs",
     "test:next": "pnpm build && node scripts/test-next-fixture.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm format:check && pnpm typecheck && pnpm test && pnpm build && pnpm test:next"
+    "verify": "pnpm format:check && pnpm typecheck && pnpm test && pnpm test:package && pnpm test:next"
   },
   "dependencies": {
     "@babel/parser": "^7.28.0",

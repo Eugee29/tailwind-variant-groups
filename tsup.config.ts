@@ -17,25 +17,13 @@ const libraryEntries = Object.fromEntries(
   }).filter(([, file]) => existsSync(file)),
 );
 
-export default defineConfig([
-  {
-    ...shared,
-    clean: true,
-    dts: true,
-    entry: libraryEntries,
-    format: ["esm", "cjs"],
-    outExtension({ format }) {
-      return { js: format === "esm" ? ".js" : ".cjs" };
-    },
+export default defineConfig({
+  ...shared,
+  clean: true,
+  dts: true,
+  entry: libraryEntries,
+  format: ["esm", "cjs"],
+  outExtension({ format }) {
+    return { js: format === "esm" ? ".js" : ".cjs" };
   },
-  {
-    ...shared,
-    clean: false,
-    dts: true,
-    entry: { loader: "src/loader.ts" },
-    format: ["cjs"],
-    outExtension() {
-      return { js: ".cjs" };
-    },
-  },
-]);
+});
