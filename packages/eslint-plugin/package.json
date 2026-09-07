@@ -28,8 +28,10 @@
     "build": "tsup --config tsup.config.ts",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "test:package": "pnpm build && node scripts/test-package.mjs",
     "test:worker": "pnpm build && node scripts/test-worker.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "verify": "pnpm format:check && pnpm typecheck && pnpm test && pnpm test:worker && pnpm test:package"
   },
   "dependencies": {
     "@tailwindcss/node": "^4.3.0",

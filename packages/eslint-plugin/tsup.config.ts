@@ -3,8 +3,11 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   bundle: true,
   clean: true,
-  dts: false,
+  dts: {
+    entry: { index: "src/index.ts" },
+  },
   entry: {
+    index: "src/index.ts",
     client: "src/tailwind/client.ts",
     worker: "src/tailwind/worker.ts",
   },
