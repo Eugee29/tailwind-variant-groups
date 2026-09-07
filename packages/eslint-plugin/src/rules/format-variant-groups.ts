@@ -17,6 +17,58 @@ export interface FormatRuleDependencies {
   analyze(request: AnalyzeRequest): AnalyzeResponse;
 }
 
+function isSourceSyntax(text: string, index: number, delimiter: string): boolean {
+  return (
+    text[index] === delimiter ||
+    (delimiter === "`" && text[index] === "$" && text[index + 1] === "{")
+  );
+}
+
+function hasEscapedSourceSyntax(text: string, delimiter: string): boolean {
+  let escaped = false;
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    if (character === "\\") {
+      escaped = !escaped;
+      continue;
+    }
+    if (escaped && isSourceSyntax(text, index, delimiter)) return true;
+    escaped = false;
+  }
+  return false;
+}
+
+function encodeSourceText(
+  output: string,
+  delimiter: string,
+  jsxAttribute: boolean,
+): string {
+  let encoded = "";
+  let escaped = false;
+  for (let index = 0; index < output.length; index += 1) {
+    const character = output[index]!;
+    if (character === "\\") {
+      encoded += character;
+      escaped = !escaped;
+      continue;
+    }
+    if (isSourceSyntax(output, index, delimiter)) {
+      // JSX attributes use entities; backslashes do not escape their delimiters.
+      encoded += jsxAttribute
+        ? delimiter === '"'
+          ? "&quot;"
+          : "&apos;"
+        : escaped
+          ? character
+          : "\\" + character;
+    } else {
+      encoded += character;
+    }
+    escaped = false;
+  }
+  return encoded;
+}
+
 export function createFormatVariantGroupsRule(
   dependencies: FormatRuleDependencies,
 ): Rule.RuleModule {
@@ -73,6 +125,9 @@ export function createFormatVariantGroupsRule(
           const validTargets: ClassListTarget[] = [];
           const lists: string[][] = [];
           for (const target of targets) {
+            const delimiter = sourceCode.text[target.range[0] - 1]!;
+            // The analyzer receives raw source, so escaped source delimiters are ambiguous.
+            if (hasEscapedSourceSyntax(target.text, delimiter)) continue;
             try {
               const expansion = expandVariantGroupsInText(target.text, {
                 filename: context.filename,
@@ -116,7 +171,12 @@ export function createFormatVariantGroupsRule(
             return;
           }
           validTargets.forEach((target, index) => {
-            const output = outputs[index]!;
+            const output = encodeSourceText(
+              outputs[index]!,
+              sourceCode.text[target.range[0] - 1]!,
+              (target.node.parent as { type: string } | undefined)?.type ===
+                "JSXAttribute",
+            );
             if (output === target.text) return;
             context.report({
               node: target.node,

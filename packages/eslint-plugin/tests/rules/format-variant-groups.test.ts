@@ -135,7 +135,146 @@ function config(
   ];
 }
 const filename = "fixture.jsx";
+describe("source-safe atomic fixes", () => {
+  it.each([
+    {
+      context: "single-quoted JavaScript with Tailwind quote normalization",
+      code: String.raw`cn('content-["hello"]')`,
+      canonical: "content-['hello']",
+      output: String.raw`cn('content-[\'hello\']')`,
+    },
+    {
+      context: "double-quoted JavaScript",
+      code: String.raw`cn("content-['hello']")`,
+      canonical: 'content-["hello"]',
+      output: String.raw`cn("content-[\"hello\"]")`,
+    },
+    {
+      context: "a JSX expression containing a JavaScript string",
+      code: String.raw`<div className={'content-["hello"]'} />`,
+      canonical: "content-['hello']",
+      output: String.raw`<div className={'content-[\'hello\']'} />`,
+    },
+    {
+      context: "a no-substitution template with backtick and interpolation characters",
+      code: "cn(`content-[placeholder]`)",
+      canonical: "content-['`_${value}']",
+      output: "cn(`content-['\\`_\\${value}']`)",
+    },
+    {
+      context: "a direct single-quoted JSX attribute",
+      code: `<div className='content-["hello"]' />`,
+      canonical: "content-['hello']",
+      output: "<div className='content-[&apos;hello&apos;]' />",
+    },
+    {
+      context: "a direct double-quoted JSX attribute",
+      code: `<div className="content-['hello']" />`,
+      canonical: 'content-["hello"]',
+      output: '<div className="content-[&quot;hello&quot;]" />',
+    },
+    {
+      context: "already-escaped analyzer output",
+      code: "cn('content-[placeholder]')",
+      canonical: String.raw`content-[\'hello\']`,
+      output: String.raw`cn('content-[\'hello\']')`,
+    },
+    {
+      context: "an even backslash run before the new quote",
+      code: "cn('content-[placeholder]')",
+      canonical: String.raw`content-[\\'hello']`,
+      output: String.raw`cn('content-[\\\'hello\']')`,
+    },
+    {
+      context: "already-escaped template output",
+      code: "cn(`content-[placeholder]`)",
+      canonical: "content-['\\`_\\${value}']",
+      output: "cn(`content-['\\`_\\${value}']`)",
+    },
+  ])("encodes $context and remains stable", ({ code, canonical, output }) => {
+    const normalize = vi.fn((request: AnalyzeRequest): AnalyzeResponse => ({
+      lists: request.lists.map((list) =>
+        list.map((raw, index) =>
+          candidate(
+            raw.includes("&apos;") || raw.includes("&quot;") ? raw : canonical,
+            index,
+          ),
+        ),
+      ),
+    }));
+    const rules = config(createFormatVariantGroupsRule({ analyze: normalize }));
+    const linter = new Linter();
+    const messages = linter.verify(code, rules, { filename });
+    expect(messages).toHaveLength(1);
+    expect(messages[0]!.messageId).toBe("needsFormatting");
+    const first = linter.verifyAndFix(code, rules, { filename });
+    expect(first.output).toBe(output);
+    expect(first.messages).toEqual([]);
+    // Parse independently of formatting to catch newly introduced syntax errors.
+    expect(
+      linter.verify(
+        first.output,
+        [
+          {
+            files: ["**/*.jsx"],
+            languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+          },
+        ],
+        { filename },
+      ),
+    ).toEqual([]);
+    const second = linter.verifyAndFix(first.output, rules, { filename });
+    expect(second).toMatchObject({ fixed: false, output, messages: [] });
+  });
+
+  it.each([
+    String.raw`cn('content-[\'hello\']', "md:gap-4 md:flex")`,
+    String.raw`cn("content-[\"hello\"]", "md:gap-4 md:flex")`,
+    "cn(`content-['\\`']`, \"md:gap-4 md:flex\")",
+    "cn(`content-['\\${name}']`, \"md:gap-4 md:flex\")",
+  ])("skips unsafe raw delimiter escapes but formats sibling strings: %s", (code) => {
+    const spy = vi.fn(analyze);
+    const rules = config(createFormatVariantGroupsRule({ analyze: spy }));
+    const linter = new Linter();
+    const messages = linter.verify(code, rules, { filename });
+    expect(messages).toHaveLength(1);
+    expect(messages[0]!.messageId).toBe("needsFormatting");
+    expect(spy).toHaveBeenCalledExactlyOnceWith({
+      stylesheet: path.resolve("styles.css"),
+      lists: [["md:gap-4", "md:flex"]],
+      options: { canonicalize: true, collapse: true, rootFontSize: 16 },
+    });
+    const result = linter.verifyAndFix(code, rules, { filename });
+    expect(result.output).toBe(code.replace("md:gap-4 md:flex", "md:(flex gap-4)"));
+    expect(result.messages).toEqual([]);
+    expect(linter.verifyAndFix(result.output, rules, { filename })).toMatchObject({
+      fixed: false,
+      output: result.output,
+    });
+  });
+});
+
 describe("batch formatting", () => {
+  it.each([
+    { canonicalize: false, collapse: true },
+    { canonicalize: true, collapse: false },
+  ])(
+    "passes canonicalize=$canonicalize and collapse=$collapse independently",
+    (options) => {
+      const spy = vi.fn(analyze);
+      const messages = new Linter().verify(
+        'cn("md:(flex gap-4)")',
+        config(createFormatVariantGroupsRule({ analyze: spy }), options),
+        { filename },
+      );
+      expect(messages).toEqual([]);
+      expect(spy).toHaveBeenCalledExactlyOnceWith({
+        stylesheet: path.resolve("styles.css"),
+        lists: [["md:flex", "md:gap-4"]],
+        options: { ...options, rootFontSize: 16 },
+      });
+    },
+  );
   it("expands all static lists in one analyzer call with settings overridden by options", () => {
     const spy = vi.fn(analyze);
     const linter = new Linter();
