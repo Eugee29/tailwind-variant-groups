@@ -53,7 +53,7 @@ export function assertSupportedTailwindVersion(
   const major = Number(match?.[1]);
   const minor = Number(match?.[2]);
 
-  if (major !== 4 || minor < 3) {
+  if (major !== 4 || minor < 3 || version.includes("-")) {
     throw new Error(
       `Tailwind CSS >=4.3 <5 is required for stylesheet ${path.resolve(stylesheet)}; found ${version}`,
     );
@@ -74,29 +74,19 @@ async function loadDesignSystem(stylesheet: string): Promise<DesignSystem> {
   }
 
   const stylesheetRequire = createRequire(stylesheet);
-  let tailwindNode: TailwindNodeModule;
-  let version: string;
 
   try {
-    try {
-      tailwindNode = stylesheetRequire("@tailwindcss/node") as TailwindNodeModule;
-    } catch (error) {
-      if (!isModuleNotFound(error)) {
-        throw error;
-      }
-      tailwindNode = packageRequire("@tailwindcss/node") as TailwindNodeModule;
-    }
-
-    try {
-      version = (stylesheetRequire("tailwindcss/package.json") as { version: string })
-        .version;
-    } catch (error) {
-      if (!isModuleNotFound(error)) {
-        throw error;
-      }
-      version = (packageRequire("tailwindcss/package.json") as { version: string })
-        .version;
-    }
+    const tailwindNodePath = resolveFromStylesheetOrPackage(
+      stylesheetRequire,
+      "@tailwindcss/node",
+    );
+    const tailwindNode = stylesheetRequire(tailwindNodePath) as TailwindNodeModule;
+    const tailwindManifestPath = resolveFromStylesheetOrPackage(
+      stylesheetRequire,
+      "tailwindcss/package.json",
+    );
+    const version = (stylesheetRequire(tailwindManifestPath) as { version: string })
+      .version;
 
     assertSupportedTailwindVersion(version, stylesheet);
     const css = await fs.readFile(stylesheet, "utf8");
@@ -121,6 +111,20 @@ async function loadDesignSystem(stylesheet: string): Promise<DesignSystem> {
         cause: error,
       },
     );
+  }
+}
+
+function resolveFromStylesheetOrPackage(
+  stylesheetRequire: NodeJS.Require,
+  specifier: string,
+): string {
+  try {
+    return stylesheetRequire.resolve(specifier);
+  } catch (error) {
+    if (!isModuleNotFound(error)) {
+      throw error;
+    }
+    return packageRequire.resolve(specifier);
   }
 }
 
