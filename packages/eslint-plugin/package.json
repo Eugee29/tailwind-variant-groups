@@ -28,6 +28,7 @@
     "build": "tsup --config tsup.config.ts",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "test:worker": "pnpm build && node scripts/test-worker.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
