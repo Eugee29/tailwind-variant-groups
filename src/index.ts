@@ -4,3 +4,9 @@ export {
   type TransformOptions,
   type TransformResult,
 } from "./core/transform.js";
+export {
+  expandVariantGroupsInText,
+  splitTopLevelUtilities,
+  type ExpandTextOptions,
+  type TextExpansion,
+} from "./core/expand-text.js";
