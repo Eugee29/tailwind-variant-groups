@@ -9,16 +9,29 @@ import ts from "typescript";
 
 const packageName = "eslint-plugin-tailwind-variant-groups";
 const packageRoot = fileURLToPath(new URL("..", import.meta.url));
+const pnpmEntry =
+  process.env.npm_execpath ??
+  createRequire(import.meta.url).resolve("pnpm/bin/pnpm.cjs");
 const consumerRoot = await fs.mkdtemp(
-  path.join(os.tmpdir(), "variant-groups-eslint-package-"),
+  path.join(os.tmpdir(), "variant groups eslint package-"),
 );
-const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+
+function runPnpm(args) {
+  // npm_execpath is a JS CLI in regular installs and a native executable in
+  // standalone pnpm installs. Neither route needs a shell or re-quoted arguments.
+  const javascriptEntry = /\.(?:c?js|mjs)$/i.test(pnpmEntry);
+  return run(
+    javascriptEntry ? process.execPath : pnpmEntry,
+    javascriptEntry ? [pnpmEntry, ...args] : args,
+    packageRoot,
+  );
+}
 
 function run(command, args, cwd) {
   const result = spawnSync(command, args, {
     cwd,
     encoding: "utf8",
-    shell: process.platform === "win32" && command === pnpm,
+    shell: false,
   });
   assert.equal(result.error, undefined, String(result.error));
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
@@ -48,7 +61,7 @@ function assertPublicPlugin(module) {
 }
 
 try {
-  const dryRun = JSON.parse(run(pnpm, ["pack", "--dry-run", "--json"], packageRoot));
+  const dryRun = JSON.parse(runPnpm(["pack", "--dry-run", "--json"]));
   const packedPaths = new Set(dryRun.files.map(({ path }) => path));
   for (const artifact of [
     "dist/index.js",
@@ -67,7 +80,7 @@ try {
 
   // Execute the actual archived files outside the repository. Only dependencies
   // are linked from the installed graph, never the plugin source or built folder.
-  run(pnpm, ["pack", "--pack-destination", consumerRoot, "--json"], packageRoot);
+  runPnpm(["pack", "--pack-destination", consumerRoot, "--json"]);
   const tarballs = (await fs.readdir(consumerRoot)).filter((file) =>
     file.endsWith(".tgz"),
   );
