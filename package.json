@@ -47,13 +47,14 @@
   "scripts": {
     "build": "tsup --config tsup.config.ts && tsup --config tsup.loader.config.ts && node scripts/copy-cjs-declarations.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --check . \"!**/.superpowers/**\" --ignore-path .gitignore",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:package": "pnpm build && node scripts/test-package-types.mjs",
     "test:next": "pnpm build && node scripts/test-next-fixture.mjs",
+    "test:eslint": "pnpm --filter eslint-plugin-tailwind-variant-groups verify && node scripts/test-eslint-fixture.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm format:check && pnpm typecheck && pnpm test && pnpm test:package && pnpm test:next"
+    "verify": "pnpm format:check && pnpm typecheck && pnpm test && pnpm test:package && pnpm test:eslint && pnpm test:next"
   },
   "dependencies": {
     "@babel/parser": "^7.28.0",

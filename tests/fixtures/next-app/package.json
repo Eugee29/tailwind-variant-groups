@@ -3,6 +3,16 @@
   "private": true,
   "version": "0.0.0",
   "devDependencies": {
-    "tailwind-variant-groups": "workspace:*"
+    "@tailwindcss/postcss": "^4.3.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-tailwindcss": "^4.4.0",
+    "eslint-plugin-tailwind-variant-groups": "workspace:*",
+    "next": "^16.0.0",
+    "postcss": "^8.5.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-variant-groups": "workspace:*",
+    "tailwindcss": "^4.3.0"
   }
 }

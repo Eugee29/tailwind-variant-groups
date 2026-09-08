@@ -26,12 +26,13 @@
   },
   "scripts": {
     "build": "tsup --config tsup.config.ts",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --check . --ignore-path ../../.gitignore",
     "test": "vitest run",
     "test:package": "pnpm build && node scripts/test-package.mjs",
+    "test:eslint-versions": "pnpm build && node scripts/test-eslint-versions.mjs",
     "test:worker": "pnpm build && node scripts/test-worker.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm format:check && pnpm typecheck && pnpm test && pnpm test:worker && pnpm test:package"
+    "verify": "pnpm format:check && pnpm typecheck && pnpm test && pnpm test:worker && pnpm test:package && pnpm test:eslint-versions"
   },
   "dependencies": {
     "@tailwindcss/node": "^4.3.0",
@@ -46,6 +47,7 @@
     "@types/eslint": "^9.6.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
+    "eslint-10": "npm:eslint@^10.0.0",
     "eslint-plugin-tailwindcss": "^4.4.0",
     "prettier": "^3.6.0",
     "tailwindcss": "^4.3.0",
