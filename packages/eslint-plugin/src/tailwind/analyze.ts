@@ -14,6 +14,7 @@ interface ParsedCandidate {
 }
 
 interface DesignSystem {
+  theme?: { prefix?: string | null };
   canonicalizeCandidates(
     candidates: string[],
     options: {
@@ -136,6 +137,19 @@ function isModuleNotFound(error: unknown): boolean {
   );
 }
 
+function decomposeCandidate(designSystem: DesignSystem, candidate: ParsedCandidate) {
+  let utility = designSystem.printCandidate({ ...candidate, variants: [] });
+  const variants = [...candidate.variants]
+    .reverse()
+    .map((variant) => designSystem.printVariant(variant));
+  const prefix = designSystem.theme?.prefix;
+  if (typeof prefix === "string" && utility.startsWith(prefix + ":")) {
+    utility = utility.slice(prefix.length + 1);
+    variants.unshift(prefix);
+  }
+  return { utility, variants };
+}
+
 function analyzeList(
   designSystem: DesignSystem,
   request: AnalyzeRequest,
@@ -153,7 +167,7 @@ function analyzeList(
     const parsedCandidates = designSystem.parseCandidate(raw);
     const orderValue = order === null ? null : order.toString(10);
 
-    if (parsedCandidates.length !== 1) {
+    if (parsedCandidates.length === 0) {
       return {
         raw,
         utility: raw,
@@ -169,12 +183,33 @@ function analyzeList(
       throw new Error("Tailwind returned an inconsistent parsed candidate result");
     }
 
+    const { utility, variants } = decomposeCandidate(designSystem, candidate);
+    // Tailwind's printer can normalize even with canonicalization disabled. Only
+    // group a decomposition that reconstructs the complete candidate exactly.
+    const reconstructed = [...variants, utility].join(":");
+    const agreement = parsedCandidates.slice(1).every((alternative) => {
+      const parts = decomposeCandidate(designSystem, alternative);
+      return (
+        parts.utility === utility &&
+        parts.variants.length === variants.length &&
+        parts.variants.every((variant, index) => variant === variants[index])
+      );
+    });
+    if (reconstructed !== raw || !agreement) {
+      return {
+        raw,
+        utility: raw,
+        variants: [],
+        order: orderValue,
+        parsed: false,
+        sourceIndex,
+      } satisfies AnalyzedCandidate;
+    }
+
     return {
       raw,
-      utility: designSystem.printCandidate({ ...candidate, variants: [] }),
-      variants: [...candidate.variants]
-        .reverse()
-        .map((variant) => designSystem.printVariant(variant)),
+      utility,
+      variants,
       order: orderValue,
       parsed: true,
       sourceIndex,
