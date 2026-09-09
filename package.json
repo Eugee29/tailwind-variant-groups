@@ -1,7 +1,7 @@
 {
   "name": "tailwind-variant-groups",
   "version": "0.1.0",
-  "description": "UnoCSS-style variant groups for Tailwind CSS 4.1–4.x and Next.js 16",
+  "description": "Variant groups for Tailwind CSS 4.1–4.x and Next.js 16",
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@11.25.0",

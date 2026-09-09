@@ -64,6 +64,8 @@ try {
   const dryRun = JSON.parse(runPnpm(["pack", "--dry-run", "--json"]));
   const packedPaths = new Set(dryRun.files.map(({ path }) => path));
   for (const artifact of [
+    "README.md",
+    "LICENSE",
     "dist/index.js",
     "dist/index.cjs",
     "dist/index.d.ts",
