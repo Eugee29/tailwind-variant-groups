@@ -37,7 +37,7 @@ interface TailwindNodeModule {
 }
 
 interface CacheEntry {
-  signature: string;
+  css: string;
   designSystem: DesignSystem;
 }
 
@@ -66,13 +66,17 @@ export function clearDesignSystemCacheForTests(): void {
 }
 
 async function loadDesignSystem(stylesheet: string): Promise<DesignSystem> {
-  const metadata = await fs.stat(stylesheet);
-  const signature = `${metadata.mtimeMs}:${metadata.size}`;
+  const css = await fs.readFile(stylesheet, "utf8");
+  // The Node design-system loader discards dependency callbacks. Reuse is only
+  // provable for self-contained stylesheets; imports may load further imports,
+  // configs, or plugins. False positives in comments only cause a safe reload.
+  const cacheable = !/@(?:import|reference|config|plugin)\b/i.test(css);
   const cached = designSystems.get(stylesheet);
 
-  if (cached?.signature === signature) {
+  if (cacheable && cached?.css === css) {
     return cached.designSystem;
   }
+  designSystems.delete(stylesheet);
 
   const stylesheetRequire = createRequire(stylesheet);
 
@@ -90,7 +94,6 @@ async function loadDesignSystem(stylesheet: string): Promise<DesignSystem> {
       .version;
 
     assertSupportedTailwindVersion(version, stylesheet);
-    const css = await fs.readFile(stylesheet, "utf8");
     const designSystem = await tailwindNode.__unstable__loadDesignSystem(css, {
       base: path.dirname(stylesheet),
     });
@@ -99,7 +102,7 @@ async function loadDesignSystem(stylesheet: string): Promise<DesignSystem> {
       throw new Error(`Tailwind CSS >=4.3 <5 is required for stylesheet ${stylesheet}`);
     }
 
-    designSystems.set(stylesheet, { signature, designSystem });
+    if (cacheable) designSystems.set(stylesheet, { css, designSystem });
     return designSystem;
   } catch (error) {
     if (error instanceof Error && error.message.includes(stylesheet)) {
