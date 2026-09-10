@@ -11,31 +11,11 @@ import {
 import { serializeVariantGroups } from "../formatter.js";
 import type { AnalyzeRequest, AnalyzeResponse } from "../protocol.js";
 import { resolveSettings, type RuleOptions } from "../settings.js";
+import { hasEscapedSourceSyntax, isSourceSyntax } from "../source-text.js";
 import { analyzeCandidateListsSync } from "../tailwind/client.js";
 
 export interface FormatRuleDependencies {
   analyze(request: AnalyzeRequest): AnalyzeResponse;
-}
-
-function isSourceSyntax(text: string, index: number, delimiter: string): boolean {
-  return (
-    text[index] === delimiter ||
-    (delimiter === "`" && text[index] === "$" && text[index + 1] === "{")
-  );
-}
-
-function hasEscapedSourceSyntax(text: string, delimiter: string): boolean {
-  let escaped = false;
-  for (let index = 0; index < text.length; index += 1) {
-    const character = text[index];
-    if (character === "\\") {
-      escaped = !escaped;
-      continue;
-    }
-    if (escaped && isSourceSyntax(text, index, delimiter)) return true;
-    escaped = false;
-  }
-  return false;
 }
 
 function encodeSourceText(
@@ -130,6 +110,7 @@ export function createFormatVariantGroupsRule(
             if (hasEscapedSourceSyntax(target.text, delimiter)) continue;
             try {
               const expansion = expandVariantGroupsInText(target.text, {
+                validateDelimiters: true,
                 filename: context.filename,
                 source: sourceCode.text,
                 offset: target.range[0],

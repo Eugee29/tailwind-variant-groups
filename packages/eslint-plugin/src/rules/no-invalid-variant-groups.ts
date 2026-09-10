@@ -5,6 +5,7 @@ import {
 } from "tailwind-variant-groups";
 import { createClassListListeners } from "../extract-class-lists.js";
 import { resolveSettings, type RuleOptions } from "../settings.js";
+import { hasEscapedSourceSyntax } from "../source-text.js";
 
 export const noInvalidVariantGroupsRule: Rule.RuleModule = {
   meta: {
@@ -35,8 +36,19 @@ export const noInvalidVariantGroupsRule: Rule.RuleModule = {
         includeDynamicTemplateSegments: true,
       },
       (target) => {
+        // Raw source escapes can be string syntax or class syntax. Match the
+        // formatter's conservative boundary instead of diagnosing decoded text
+        // with offsets that no longer refer to the authored source.
+        const delimiter =
+          target.node.type === "TemplateElement"
+            ? "`"
+            : sourceCode.text[target.range[0] - 1]!;
+        if (hasEscapedSourceSyntax(target.text, delimiter)) return;
         try {
           expandVariantGroupsInText(target.text, {
+            // Interpolation segments can begin/end inside arbitrary values. Their
+            // group-boundary checks remain active without assuming balanced tokens.
+            validateDelimiters: target.formatEligible,
             filename: context.filename,
             source: sourceCode.text,
             offset: target.range[0],

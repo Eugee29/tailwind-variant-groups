@@ -2,6 +2,8 @@ import { VariantGroupSyntaxError } from "./error.js";
 
 export interface ExpandTextOptions {
   strict?: boolean;
+  /** Validate complete class-list delimiters; opt in to preserve runtime compatibility. */
+  validateDelimiters?: boolean;
   filename?: string;
   source?: string;
   offset?: number;
@@ -34,6 +36,87 @@ const CLOSE_TO_OPEN: Record<string, string> = {
 
 function isWhitespace(character: string | undefined): boolean {
   return character !== undefined && /\s/u.test(character);
+}
+
+function validateDelimiters(text: string, options: ExpandTextOptions): void {
+  const stack: { character: string; index: number; group: boolean }[] = [];
+  let quote: string | undefined;
+  let escaped = false;
+  const fail = (message: string, index: number): never => {
+    throw new VariantGroupSyntaxError(message, index, {
+      filename: options.filename,
+      source: options.source ?? text,
+      offset: options.offset,
+    });
+  };
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index]!;
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (character === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (quote !== undefined) {
+      if (character === quote) quote = undefined;
+      continue;
+    }
+    if (character === '"' || character === "'" || character === "`") {
+      quote = character;
+      continue;
+    }
+
+    if (OPEN_TO_CLOSE[character] !== undefined) {
+      const parent = stack.at(-1);
+      if (
+        character === "(" &&
+        parent?.group &&
+        (index === parent.index + 1 || isWhitespace(text[index - 1]))
+      ) {
+        fail("Nested variant groups require a variant prefix", index);
+      }
+      stack.push({
+        character,
+        index,
+        group:
+          character === "(" &&
+          text[index - 1] === ":" &&
+          stack.every((item) => item.group),
+      });
+      continue;
+    }
+    const expectedOpen = CLOSE_TO_OPEN[character];
+    if (expectedOpen !== undefined) {
+      const opener = stack.pop();
+      if (!opener || opener.character !== expectedOpen) {
+        return fail(`Unmatched closing delimiter '${character}'`, index);
+      }
+      const next = text[index + 1];
+      if (
+        opener.group &&
+        next !== undefined &&
+        !isWhitespace(next) &&
+        CLOSE_TO_OPEN[next] === undefined
+      ) {
+        fail("Variant groups must be separated by whitespace", index + 1);
+      }
+    }
+  }
+
+  const opener = stack.at(-1);
+  if (opener) {
+    fail(
+      opener.group
+        ? options.interpolationBoundary
+          ? "Variant groups cannot cross a template interpolation"
+          : "Unterminated variant group"
+        : `Unterminated delimiter '${opener.character}'`,
+      opener.index,
+    );
+  }
 }
 
 function findGroupOpener(text: string, start: number): number {
@@ -207,6 +290,7 @@ export function expandVariantGroupsInText(
   options: ExpandTextOptions = {},
 ): TextExpansion {
   const strict = options.strict ?? true;
+  if (options.validateDelimiters && strict) validateDelimiters(text, options);
   const candidates: string[] = [];
   const output: string[] = [];
   let changed = false;

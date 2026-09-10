@@ -58,6 +58,7 @@ describe("runtime parser package contract", () => {
       source: code,
       offset: code.indexOf(target),
       interpolationBoundary: false,
+      validateDelimiters: true,
     });
   });
 
@@ -110,13 +111,22 @@ describe("runtime parser package contract", () => {
       messages: [],
     });
     expect(expandVariantGroupsInText.mock.calls).toEqual([
-      [target, { filename, source: code, offset: code.indexOf(target) }],
+      [
+        target,
+        {
+          filename,
+          source: code,
+          offset: code.indexOf(target),
+          validateDelimiters: true,
+        },
+      ],
       [
         "md:(flex gap-4)",
         {
           filename,
           source: 'const value = cn("md:(flex gap-4)");',
           offset: code.indexOf(target),
+          validateDelimiters: true,
         },
       ],
     ]);

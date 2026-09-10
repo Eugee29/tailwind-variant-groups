@@ -51,6 +51,8 @@ TSX as needed; the preset does not select a parser.
 
 ### With `eslint-plugin-tailwindcss`
 
+Compatibility is tested with `eslint-plugin-tailwindcss@4.4.0`.
+
 Put the compatibility preset after `tailwindcss.configs.recommended` so its overrides
 win:
 
@@ -87,6 +89,9 @@ The compatibility preset includes this plugin's recommended rules and disables t
 Other `tailwindcss` rules and unrelated ESLint rules remain enabled. Manually
 re-enabling any of these nine fixers over grouped strings is unsupported: a
 whitespace-based fixer can move a utility outside its variant scope.
+
+Unknown-class and conflicting-class diagnostics are deferred; the compatibility preset
+does not replace that diagnostic coverage in this release.
 
 ## Formatting behavior
 

@@ -60,8 +60,56 @@ for (const [packageName, major] of [
     );
     assert.deepEqual(opaque.messages, []);
     assert.ok(opaque.output.includes("custom-card md:custom-card"), opaque.output);
+
+    for (const [text, column] of [
+      ["md:(flex))", 14],
+      ["md:(flex gap-4)]", 20],
+      ["md:(flex gap-4)}", 20],
+      ["md:([flex)]", 14],
+      ["md:((flex gap-4))", 9],
+    ]) {
+      const code = `cn("${text}")`;
+      const malformed = linter.verifyAndFix(code, config);
+      assert.equal(malformed.fixed, false);
+      assert.equal(malformed.output, code);
+      assert.equal(malformed.messages.length, 1);
+      assert.equal(malformed.messages[0].messageId, "invalidGroup");
+      assert.equal(malformed.messages[0].column, column);
+      assert.equal(malformed.messages[0].endColumn, column + 1);
+      assert.equal(malformed.messages[0].fix, undefined);
+    }
+
+    const prefixedConfig = [
+      ...config,
+      {
+        settings: {
+          "tailwind-variant-groups": {
+            stylesheet: fileURLToPath(
+              new URL("../tests/fixtures/prefixed.css", import.meta.url),
+            ),
+          },
+        },
+      },
+    ];
+    for (const [input, expected] of [
+      ["acme:md:flex", "acme:md:flex"],
+      ["acme:md:gap-4 acme:md:flex", "acme:(md:(flex gap-4))"],
+      ["acme:(md:(gap-4 flex))", "acme:(md:(flex gap-4))"],
+      [
+        "acme:md:hover:bg-red-500 acme:md:hover:text-white",
+        "acme:(md:(hover:(bg-red-500 text-white)))",
+      ],
+    ]) {
+      const formatted = linter.verifyAndFix(`cn("${input}")`, prefixedConfig);
+      assert.deepEqual(formatted.messages, []);
+      assert.equal(formatted.output, `cn("${expected}")`);
+      const again = linter.verifyAndFix(formatted.output, prefixedConfig);
+      assert.equal(again.fixed, false);
+      assert.equal(again.output, formatted.output);
+      assert.deepEqual(again.messages, []);
+    }
     console.log(
-      `${packageName} ${Linter.version} ${preset}: canonical, delimiter-safe, opaque-preserving and idempotent`,
+      `${packageName} ${Linter.version} ${preset}: canonical, prefix-safe, delimiter-safe, opaque-preserving and idempotent`,
     );
   }
 }
