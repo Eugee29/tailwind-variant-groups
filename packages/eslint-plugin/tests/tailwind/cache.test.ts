@@ -44,7 +44,7 @@ describe("design-system dependency freshness", () => {
     }
   }, 30_000);
 
-  it("does not use a cached result after a dependency is deleted and recovers after restoration", async () => {
+  it("does not use a cached result after deletion and recovers after replacing the missing import", async () => {
     const directory = await fs.mkdtemp(path.join(fixtures, "deleted-cache-"));
     const stylesheet = path.join(directory, "styles.css");
     const theme = path.join(directory, "theme.css");
@@ -55,7 +55,16 @@ describe("design-system dependency freshness", () => {
       await fs.unlink(theme);
       await expect(analyze(stylesheet)).rejects.toThrow(stylesheet);
       await expect(analyze(stylesheet)).rejects.toThrow(/theme\.css/);
-      await fs.writeFile(theme, "@theme { --spacing: 0.5rem; }");
+      // Tailwind's resolver may cache the missing path independently for 4s.
+      // Correct to a new import to prove our analyzer does not cache the error.
+      await fs.writeFile(
+        path.join(directory, "replacement.css"),
+        "@theme { --spacing: 0.5rem; }",
+      );
+      await fs.writeFile(
+        stylesheet,
+        '@import "tailwindcss"; @import "./replacement.css";',
+      );
       expect((await analyze(stylesheet)).lists[0]![0]!.raw).toBe("w-1");
     } finally {
       await fs.rm(directory, { recursive: true, force: true });

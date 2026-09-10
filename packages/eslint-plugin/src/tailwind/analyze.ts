@@ -67,10 +67,13 @@ export function clearDesignSystemCacheForTests(): void {
 
 async function loadDesignSystem(stylesheet: string): Promise<DesignSystem> {
   const css = await fs.readFile(stylesheet, "utf8");
-  // The Node design-system loader discards dependency callbacks. Reuse is only
-  // provable for self-contained stylesheets; imports may load further imports,
-  // configs, or plugins. False positives in comments only cause a safe reload.
-  const cacheable = !/@(?:import|reference|config|plugin)\b/i.test(css);
+  // Treat the installed framework package as immutable for the worker lifetime.
+  // The Node loader discards dependency callbacks, so every other import/config/
+  // plugin/reference must reload. Unrecognized syntax only causes a safe reload.
+  const cacheable = [...css.matchAll(/@(?:import|reference|config|plugin)\b/gi)].every(
+    (directive) =>
+      /^@import\s+(["'])tailwindcss\1(?=\s|;)/.test(css.slice(directive.index)),
+  );
   const cached = designSystems.get(stylesheet);
 
   if (cacheable && cached?.css === css) {
