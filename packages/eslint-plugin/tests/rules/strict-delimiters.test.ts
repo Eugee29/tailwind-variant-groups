@@ -12,6 +12,9 @@ vi.mock("../../src/tailwind/client.js", () => ({
 describe("shared strict delimiter validation", () => {
   it.each([
     ["md:(flex))", 9],
+    ["don't md:(flex))", 15],
+    ["don't md:(flex gap-4)]", 21],
+    ["md:(don't flex))", 15],
     ["md:(flex gap-4)]", 15],
     ["md:(flex gap-4)}", 15],
     ["md:([flex)]", 9],
@@ -58,12 +61,15 @@ describe("shared strict delimiter validation", () => {
   );
 
   it.each([
+    'cn("don\'t")',
+    'cn("don\'t md:(flex gap-4)")',
     'cn("[&:is(button,a)]:(flex gap-4)")',
     String.raw`cn('md:(content-[\'hello)\'] flex)')`,
     String.raw`cn("md:(content-[\"hello]\"] flex)")`,
     "cn(\"md:(content-[')_[}_]'] w-[calc(100%-2rem)] bg-(--brand))\")",
     String.raw`cn("md:(custom\] flex)")`,
     "cn(`bg-[${color}] md:(flex gap-4)`)",
+    "cn(`don't bg-[${color}] md:(flex gap-4)`)",
     "cn(`md:(flex gap-4) ${color} hover:(block hidden)`)",
   ])(
     "accepts arbitrary syntax and complete groups around interpolation: %s",

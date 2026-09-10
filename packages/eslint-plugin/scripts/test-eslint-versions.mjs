@@ -63,6 +63,9 @@ for (const [packageName, major] of [
 
     for (const [text, column] of [
       ["md:(flex))", 14],
+      ["don't md:(flex))", 20],
+      ["don't md:(flex gap-4)]", 26],
+      ["md:(don't flex))", 20],
       ["md:(flex gap-4)]", 20],
       ["md:(flex gap-4)}", 20],
       ["md:([flex)]", 14],
@@ -77,6 +80,21 @@ for (const [packageName, major] of [
       assert.equal(malformed.messages[0].column, column);
       assert.equal(malformed.messages[0].endColumn, column + 1);
       assert.equal(malformed.messages[0].fix, undefined);
+    }
+
+    for (const [text, expected] of [
+      ["don't", "don't"],
+      ["don't md:(flex gap-4)", "don't md:flex md:gap-4"],
+    ]) {
+      const code = `cn("${text}")`;
+      const apostrophe = linter.verifyAndFix(code, config);
+      assert.equal(apostrophe.output, `cn("${expected}")`);
+      assert.equal(apostrophe.fixed, text !== expected);
+      assert.deepEqual(apostrophe.messages, []);
+      const again = linter.verifyAndFix(apostrophe.output, config);
+      assert.equal(again.output, apostrophe.output);
+      assert.equal(again.fixed, false);
+      assert.deepEqual(again.messages, []);
     }
 
     const prefixedConfig = [

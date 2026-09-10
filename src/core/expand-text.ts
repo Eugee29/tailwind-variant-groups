@@ -64,7 +64,12 @@ function validateDelimiters(text: string, options: ExpandTextOptions): void {
       if (character === quote) quote = undefined;
       continue;
     }
-    if (character === '"' || character === "'" || character === "`") {
+    // Ordinary class names (including group bodies) may contain apostrophes.
+    // Quotes protect delimiters only inside arbitrary values or functions.
+    if (
+      (character === '"' || character === "'" || character === "`") &&
+      stack.some((item) => !item.group)
+    ) {
       quote = character;
       continue;
     }
