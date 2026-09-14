@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { __unstable__loadDesignSystem as bundledLoadDesignSystem } from "@tailwindcss/node";
 
 interface DesignSystem {
   candidatesToCss(candidates: string[]): (string | null)[];
@@ -27,10 +27,6 @@ export interface TailwindPreviewService {
   invalidate(stylesheet?: string): void;
 }
 
-const moduleUrl =
-  typeof __filename === "string" ? pathToFileURL(__filename).href : import.meta.url;
-const packageRequire = createRequire(moduleUrl);
-
 function isModuleNotFound(error: unknown): boolean {
   return (
     error instanceof Error &&
@@ -39,15 +35,18 @@ function isModuleNotFound(error: unknown): boolean {
   );
 }
 
-function resolveFromStylesheetOrPackage(
-  stylesheetRequire: NodeJS.Require,
-  specifier: string,
-): string {
+function loadTailwindNode(stylesheetRequire: NodeJS.Require): TailwindNodeModule {
   try {
-    return stylesheetRequire.resolve(specifier);
+    const resolved = stylesheetRequire.resolve("@tailwindcss/node");
+    return stylesheetRequire(resolved) as TailwindNodeModule;
   } catch (error) {
     if (!isModuleNotFound(error)) throw error;
-    return packageRequire.resolve(specifier);
+    return {
+      __unstable__loadDesignSystem: bundledLoadDesignSystem as (
+        css: string,
+        options: { base: string },
+      ) => Promise<DesignSystem>,
+    };
   }
 }
 
@@ -86,15 +85,8 @@ export function createTailwindPreviewService(): TailwindPreviewService {
 
     const stylesheetRequire = createRequire(resolved);
     try {
-      const tailwindNodePath = resolveFromStylesheetOrPackage(
-        stylesheetRequire,
-        "@tailwindcss/node",
-      );
-      const tailwindNode = stylesheetRequire(tailwindNodePath) as TailwindNodeModule;
-      const manifestPath = resolveFromStylesheetOrPackage(
-        stylesheetRequire,
-        "tailwindcss/package.json",
-      );
+      const tailwindNode = loadTailwindNode(stylesheetRequire);
+      const manifestPath = stylesheetRequire.resolve("tailwindcss/package.json");
       const manifest = stylesheetRequire(manifestPath) as { version: string };
 
       assertSupportedTailwindVersion(manifest.version, resolved);

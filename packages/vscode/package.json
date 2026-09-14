@@ -7,6 +7,17 @@
   "publisher": "eugee29",
   "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Eugee29/tailwind-variant-groups.git",
+    "directory": "packages/vscode"
+  },
+  "keywords": [
+    "tailwind",
+    "tailwindcss",
+    "variant groups",
+    "hover"
+  ],
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -21,23 +32,66 @@
     "onLanguage:typescriptreact"
   ],
   "main": "./dist/extension.cjs",
+  "contributes": {
+    "configuration": {
+      "title": "Tailwind Variant Groups",
+      "properties": {
+        "tailwindVariantGroups.hovers": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Show Tailwind CSS hover previews for ordinary classes and variant groups."
+        },
+        "tailwindVariantGroups.stylesheet": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "description": "Tailwind CSS entry stylesheet, relative to the workspace folder (for example ./app/globals.css)."
+        },
+        "tailwindVariantGroups.attributes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "class",
+            "className"
+          ],
+          "scope": "resource",
+          "description": "JSX attributes whose static string values are treated as Tailwind class lists."
+        },
+        "tailwindVariantGroups.callees": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "cn",
+            "clsx",
+            "cva"
+          ],
+          "scope": "resource",
+          "description": "Direct function calls whose static string arguments are treated as Tailwind class lists."
+        }
+      }
+    }
+  },
   "scripts": {
     "build": "tsup --config tsup.config.ts",
     "format:check": "prettier --check . --ignore-path ../../.gitignore",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "package:vsix": "pnpm build && vsce package --no-dependencies --out tailwind-variant-groups-vscode-0.1.0.vsix",
-    "verify": "pnpm format:check && pnpm typecheck && pnpm test && pnpm build"
-  },
-  "dependencies": {
-    "@babel/parser": "^7.28.0",
-    "@tailwindcss/node": "^4.3.0",
-    "tailwind-variant-groups": "workspace:*"
+    "test:package": "pnpm build && node scripts/test-package.mjs",
+    "verify": "pnpm format:check && pnpm typecheck && pnpm test && pnpm test:package"
   },
   "devDependencies": {
+    "@babel/parser": "^7.28.0",
+    "@tailwindcss/node": "^4.3.0",
     "@types/vscode": "^1.96.0",
     "@vscode/vsce": "^3.6.2",
     "prettier": "^3.6.0",
+    "tailwind-variant-groups": "workspace:*",
     "tailwindcss": "^4.3.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.0",

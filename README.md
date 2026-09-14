@@ -166,6 +166,32 @@ See the
 [`eslint-plugin-tailwind-variant-groups` README](https://www.npmjs.com/package/eslint-plugin-tailwind-variant-groups)
 for installation, standalone configuration, compatibility details, and rule options.
 
+## Optional VS Code hover companion
+
+The repository also contains a companion extension that provides accurate Tailwind CSS
+hover previews for ordinary classes, utilities inside variant groups, and complete group
+subtrees. Build and install its local VSIX when developing with grouped syntax:
+
+```bash
+pnpm --filter tailwind-variant-groups-vscode package:vsix
+```
+
+Configure the Tailwind entry stylesheet and disable only Tailwind CSS IntelliSense's
+native hover provider:
+
+```json
+{
+  "tailwindCSS.hovers": false,
+  "tailwindVariantGroups.hovers": true,
+  "tailwindVariantGroups.stylesheet": "./app/globals.css"
+}
+```
+
+Tailwind CSS IntelliSense continues to provide completions, validation, colors, and its
+other features. See the [VS Code companion guide](packages/vscode/README.md) for local
+installation, custom attribute/callee settings, and grouped-hover examples. The
+extension supports Tailwind CSS `>=4.3 <5`.
+
 ## Compatibility
 
 | Component    | Supported versions or modes  |

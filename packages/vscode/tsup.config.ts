@@ -13,8 +13,15 @@ export default defineConfig({
   clean: true,
   dts: false,
   entry: entries,
+  esbuildOptions(options) {
+    options.alias = {
+      ...options.alias,
+      lightningcss: "./src/lightningcss-stub.ts",
+    };
+  },
   external: ["vscode"],
   format: ["cjs"],
+  noExternal: [/^(?!vscode$).+/],
   outExtension: () => ({ js: ".cjs" }),
   platform: "node",
   sourcemap: true,

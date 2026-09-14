@@ -5,6 +5,8 @@ import { resolveStylesheet, type VariantGroupsHoverSettings } from "./settings.j
 import type { TailwindPreviewService } from "./tailwind-preview.js";
 import type { TextRange } from "tailwind-variant-groups";
 
+export { createTailwindPreviewService } from "./tailwind-preview.js";
+
 export interface HoverRequest {
   uri: string;
   filename: string;
