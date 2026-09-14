@@ -1,9 +1,9 @@
 # tailwind-variant-groups
 
-Style variant groups for Tailwind CSS 4.1–4.x and Next.js 16. Write grouped
-responsive and state variants in JavaScript or TypeScript source while the package
-expands them into ordinary static Tailwind class names for both the rendered markup and
-Tailwind's candidate scanner.
+Variant groups for Tailwind CSS 4.1–4.x and Next.js 16. Write grouped responsive and
+state variants in JavaScript or TypeScript source while the package expands them into
+ordinary static Tailwind class names for both the rendered markup and Tailwind's
+candidate scanner.
 
 ## Install
 
@@ -134,6 +134,37 @@ In strict mode, malformed or unterminated groups and groups crossing a template
 interpolation throw a `VariantGroupSyntaxError` with the filename, line, and column.
 With `strict: false`, malformed expressions stay unchanged while other valid groups
 continue to expand.
+
+## Optional ESLint companion
+
+Install
+[`eslint-plugin-tailwind-variant-groups`](https://www.npmjs.com/package/eslint-plugin-tailwind-variant-groups)
+separately when you want ESLint to validate, canonicalize, sort, and group static class
+strings. It is optional and is not required by this package at runtime.
+
+When it is used with `eslint-plugin-tailwindcss`, keep the compatibility preset after
+the Tailwind preset:
+
+```js
+import tailwindcss from "eslint-plugin-tailwindcss";
+import variantGroups from "eslint-plugin-tailwind-variant-groups";
+
+export default [
+  tailwindcss.configs.recommended,
+  variantGroups.configs["flat/compat-tailwindcss"],
+  {
+    settings: {
+      "tailwind-variant-groups": {
+        stylesheet: "./src/app/globals.css",
+      },
+    },
+  },
+];
+```
+
+See the
+[`eslint-plugin-tailwind-variant-groups` README](https://www.npmjs.com/package/eslint-plugin-tailwind-variant-groups)
+for installation, standalone configuration, compatibility details, and rule options.
 
 ## Compatibility
 

@@ -1,0 +1,58 @@
+{
+  "name": "eslint-plugin-tailwind-variant-groups",
+  "version": "0.1.0",
+  "description": "ESLint formatting and validation for Tailwind CSS variant groups",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20.19"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup --config tsup.config.ts",
+    "format:check": "prettier --check . --ignore-path ../../.gitignore",
+    "test": "vitest run",
+    "test:package": "pnpm build && node scripts/test-package.mjs",
+    "test:eslint-versions": "pnpm build && node scripts/test-eslint-versions.mjs",
+    "test:worker": "pnpm build && node scripts/test-worker.mjs",
+    "typecheck": "tsc --noEmit",
+    "verify": "pnpm format:check && pnpm typecheck && pnpm test && pnpm test:worker && pnpm test:package && pnpm test:eslint-versions"
+  },
+  "dependencies": {
+    "@tailwindcss/node": "^4.3.0",
+    "synckit": "^0.11.13",
+    "tailwind-variant-groups": "workspace:*"
+  },
+  "peerDependencies": {
+    "eslint": ">=9 <11",
+    "tailwindcss": ">=4.3 <5"
+  },
+  "devDependencies": {
+    "@types/eslint": "^9.6.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "eslint-10": "npm:eslint@^10.0.0",
+    "eslint-plugin-tailwindcss": "^4.4.0",
+    "prettier": "^3.6.0",
+    "tailwindcss": "^4.3.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.0",
+    "vitest": "^4.0.0"
+  }
+}
