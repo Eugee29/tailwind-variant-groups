@@ -7,10 +7,15 @@ const moduleUrl = commonjs ? pathToFileURL(__filename).href : import.meta.url;
 const workerPath = fileURLToPath(
   new URL(commonjs ? "./worker.cjs" : "./worker.js", moduleUrl),
 );
-const runWorker = createSyncFn(workerPath) as (
-  request: AnalyzeRequest,
-) => AnalyzeResponse;
+type RunWorker = (request: AnalyzeRequest) => AnalyzeResponse;
+
+let runWorker: RunWorker | undefined;
+
+function getRunWorker(): RunWorker {
+  runWorker ??= createSyncFn(workerPath) as RunWorker;
+  return runWorker;
+}
 
 export function analyzeCandidateListsSync(request: AnalyzeRequest): AnalyzeResponse {
-  return runWorker(request);
+  return getRunWorker()(request);
 }
