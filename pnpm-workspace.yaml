@@ -4,4 +4,6 @@ packages:
   - "tests/fixtures/next-app"
 
 allowBuilds:
+  "@vscode/vsce-sign": true
   esbuild: true
+  keytar: true

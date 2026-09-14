@@ -1,0 +1,46 @@
+{
+  "name": "tailwind-variant-groups-vscode",
+  "displayName": "Tailwind Variant Groups",
+  "description": "Tailwind CSS hover previews for ordinary classes and variant groups",
+  "version": "0.1.0",
+  "private": true,
+  "publisher": "eugee29",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact"
+  ],
+  "main": "./dist/extension.cjs",
+  "scripts": {
+    "build": "tsup --config tsup.config.ts",
+    "format:check": "prettier --check . --ignore-path ../../.gitignore",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "package:vsix": "pnpm build && vsce package --no-dependencies --out tailwind-variant-groups-vscode-0.1.0.vsix",
+    "verify": "pnpm format:check && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.28.0",
+    "@tailwindcss/node": "^4.3.0",
+    "tailwind-variant-groups": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.96.0",
+    "@vscode/vsce": "^3.6.2",
+    "prettier": "^3.6.0",
+    "tailwindcss": "^4.3.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.0",
+    "vitest": "^4.0.0"
+  }
+}
