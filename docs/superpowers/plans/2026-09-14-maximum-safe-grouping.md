@@ -1,12 +1,20 @@
 # Maximum-Safe Grouping Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use
+> superpowers:subagent-driven-development (recommended) or superpowers:executing-plans
+> to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make the default ESLint formatter group every safely movable repeated variant prefix while preserving exact candidate semantics and the `sort: false` source-order contract.
+**Goal:** Make the default ESLint formatter group every safely movable repeated variant
+prefix while preserving exact candidate semantics and the `sort: false` source-order
+contract.
 
-**Architecture:** Keep Tailwind analysis as the authority for whether a candidate has an exact, unambiguous decomposition. When sorting is enabled, serialize consecutive parsed runs through an ordered prefix trie; opaque candidates split runs. Keep the existing contiguous serializer for `sort: false`.
+**Architecture:** Keep Tailwind analysis as the authority for whether a candidate has an
+exact, unambiguous decomposition. When sorting is enabled, serialize consecutive parsed
+runs through an ordered prefix trie; opaque candidates split runs. Keep the existing
+contiguous serializer for `sort: false`.
 
-**Tech Stack:** TypeScript, Tailwind CSS 4.3 design-system APIs, Vitest, ESLint 9/10 flat config, pnpm.
+**Tech Stack:** TypeScript, Tailwind CSS 4.3 design-system APIs, Vitest, ESLint 9/10
+flat config, pnpm.
 
 **Spec:** `docs/superpowers/specs/2026-09-14-maximum-grouping-vscode-hover-design.md`
 
@@ -25,13 +33,17 @@
 ### Task 1: Ordered prefix-trie serialization
 
 **Files:**
+
 - Modify: `packages/eslint-plugin/tests/formatter.test.ts`
 - Modify: `packages/eslint-plugin/src/formatter.ts`
 
 **Interfaces:**
+
 - Consumes: `AnalyzedCandidate` from `packages/eslint-plugin/src/protocol.ts`.
-- Produces: existing `serializeVariantGroups(items, options): string` with new default behavior when `options.sort && options.group` are both true.
-- Keeps: `sortAnalyzedCandidates(items): AnalyzedCandidate[]` and the contiguous serializer for `sort: false`.
+- Produces: existing `serializeVariantGroups(items, options): string` with new default
+  behavior when `options.sort && options.group` are both true.
+- Keeps: `sortAnalyzedCandidates(items): AnalyzedCandidate[]` and the contiguous
+  serializer for `sort: false`.
 
 - [ ] **Step 1: Write failing maximum-grouping tests**
 
@@ -130,8 +142,8 @@ later encounters reuse it. A utility appends a separate `UtilityEntry`, includin
 duplicates. Increment `leafCount` on every node in the candidate path.
 
 `serializePrefixTrie` emits entries in first-occurrence order. A variant child with
-`leafCount >= 2` becomes `variant:(<serialized children>)`; a child with one leaf becomes
-`variant:<only serialized child>`.
+`leafCount >= 2` becomes `variant:(<serialized children>)`; a child with one leaf
+becomes `variant:<only serialized child>`.
 
 `serializeMaximumParsedRuns` scans the sorted candidates, passes each consecutive parsed
 run to the trie, and emits every opaque candidate unchanged between runs.
@@ -170,13 +182,17 @@ git commit -m "feat(eslint): maximize safe variant grouping"
 ### Task 2: Semantic equivalence and formatter integration proof
 
 **Files:**
+
 - Modify: `packages/eslint-plugin/tests/semantic-equivalence.test.ts`
 - Modify: `packages/eslint-plugin/tests/rules/format-variant-groups.test.ts`
 - Modify: `packages/eslint-plugin/README.md`
 
 **Interfaces:**
-- Consumes: maximum-safe `serializeVariantGroups` from Task 1 and existing real Tailwind analyzer.
-- Produces: regression proof that reordered grouping expands to the same candidates and CSS declarations; documents the `sort` interaction.
+
+- Consumes: maximum-safe `serializeVariantGroups` from Task 1 and existing real Tailwind
+  analyzer.
+- Produces: regression proof that reordered grouping expands to the same candidates and
+  CSS declarations; documents the `sort` interaction.
 
 - [ ] **Step 1: Write failing real-Tailwind and rule-level tests**
 
@@ -217,8 +233,8 @@ the maximum serializer.
 
 - [ ] **Step 3: Make only integration-level expectation changes required by Task 1**
 
-Do not add another grouping implementation. Use the existing rule and analyzer path.
-If Tailwind sorting changes the literal order, derive the literal from the observed
+Do not add another grouping implementation. Use the existing rule and analyzer path. If
+Tailwind sorting changes the literal order, derive the literal from the observed
 Tailwind order once, then retain the independently checked expanded-candidate and
 declaration comparisons.
 
@@ -258,11 +274,14 @@ git commit -m "test(eslint): prove maximum grouping equivalence"
 ### Task 3: Root regression gate
 
 **Files:**
+
 - No production files expected.
 
 **Interfaces:**
+
 - Consumes: completed Tasks 1-2.
-- Produces: proof that maximum grouping does not regress runtime, package types, PostCSS, or Next.js integrations.
+- Produces: proof that maximum grouping does not regress runtime, package types,
+  PostCSS, or Next.js integrations.
 
 - [ ] **Step 1: Run root checks relevant to changed code**
 
@@ -292,4 +311,3 @@ Only if Step 1 required formatting changes:
 git add packages/eslint-plugin
 git commit -m "style(eslint): format maximum grouping changes"
 ```
-

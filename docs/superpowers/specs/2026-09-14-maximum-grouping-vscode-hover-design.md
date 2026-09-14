@@ -143,9 +143,9 @@ three effective candidates.
 
 ## Tailwind CSS Preview Service
 
-The extension resolves a Tailwind v4 stylesheet from
-`tailwindVariantGroups.stylesheet`, relative to the workspace folder. An explicit path
-is required in this phase; ambiguous automatic project discovery is out of scope.
+The extension resolves a Tailwind v4 stylesheet from `tailwindVariantGroups.stylesheet`,
+relative to the workspace folder. An explicit path is required in this phase; ambiguous
+automatic project discovery is out of scope.
 
 The service resolves the workspace's Tailwind installation from the stylesheet, loads
 the design system through `@tailwindcss/node`, and uses Tailwind's candidate-to-CSS API
@@ -155,8 +155,8 @@ than a guessed preview.
 
 The loaded design system is cached by resolved stylesheet and stylesheet contents. A
 file watcher invalidates the cache when the entry stylesheet changes. Imported Tailwind
-configuration is reloaded conservatively whenever the entry stylesheet cannot be
-proven self-contained, matching the ESLint adapter's safety posture.
+configuration is reloaded conservatively whenever the entry stylesheet cannot be proven
+self-contained, matching the ESLint adapter's safety posture.
 
 Document extraction and class-list trees are cached by document URI and version. Parsing
 and Tailwind compilation happen only when VS Code requests hover; the extension does no
@@ -196,8 +196,8 @@ If native hover is enabled, it logs one clear coexistence warning per workspace 
 - Tailwind loading or compilation failures produce no partial hover and are logged
   without repeatedly notifying on every mouse move.
 - Malformed groups produce no grouped hover. ESLint remains the diagnostic owner.
-- Unknown candidates are listed in a group expansion but omitted from the CSS block;
-  an individual unknown candidate produces no hover.
+- Unknown candidates are listed in a group expansion but omitted from the CSS block; an
+  individual unknown candidate produces no hover.
 - Cancellation is checked before stylesheet loading and before returning large group
   previews.
 

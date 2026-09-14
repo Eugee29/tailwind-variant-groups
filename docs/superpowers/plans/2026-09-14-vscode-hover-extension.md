@@ -1,12 +1,20 @@
 # VS Code Hover Companion Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use
+> superpowers:subagent-driven-development (recommended) or superpowers:executing-plans
+> to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a local VS Code companion extension that replaces native Tailwind hover and shows application-aware CSS for ordinary classes, grouped classes with inherited variants, and complete group subtrees.
+**Goal:** Build a local VS Code companion extension that replaces native Tailwind hover
+and shows application-aware CSS for ordinary classes, grouped classes with inherited
+variants, and complete group subtrees.
 
-**Architecture:** Add an editor-neutral range-aware class-list tree to the root package, then consume it from a new `packages/vscode` extension. Keep document extraction, target resolution, Tailwind CSS generation, Markdown rendering, and the VS Code activation adapter separate so the behavior is testable without an extension host.
+**Architecture:** Add an editor-neutral range-aware class-list tree to the root package,
+then consume it from a new `packages/vscode` extension. Keep document extraction, target
+resolution, Tailwind CSS generation, Markdown rendering, and the VS Code activation
+adapter separate so the behavior is testable without an extension host.
 
-**Tech Stack:** TypeScript, VS Code Extension API, Babel parser, Tailwind CSS `@tailwindcss/node` design system, Vitest, tsup, `@vscode/vsce`, pnpm.
+**Tech Stack:** TypeScript, VS Code Extension API, Babel parser, Tailwind CSS
+`@tailwindcss/node` design system, Vitest, tsup, `@vscode/vsce`, pnpm.
 
 **Spec:** `docs/superpowers/specs/2026-09-14-maximum-grouping-vscode-hover-design.md`
 
@@ -15,10 +23,12 @@
 - Support JavaScript, JavaScript React, TypeScript, and TypeScript React only.
 - Support VS Code `^1.96.0`, Tailwind CSS `>=4.3 <5`, and Node.js 20 or newer.
 - Require an explicit workspace-relative `tailwindVariantGroups.stylesheet`.
-- Default attributes are `class` and `className`; default callees are `cn`, `clsx`, and `cva`.
+- Default attributes are `class` and `className`; default callees are `cn`, `clsx`, and
+  `cva`.
 - Handle only static string literals and static template literals in this phase.
 - Provide both ordinary and grouped hover; users disable only `tailwindCSS.hovers`.
-- Do not add completion, diagnostics, color decorators, sorting, settings mutation, HTML/Vue/Svelte support, or Marketplace publication.
+- Do not add completion, diagnostics, color decorators, sorting, settings mutation,
+  HTML/Vue/Svelte support, or Marketplace publication.
 - Produce a local VSIX and keep generated VSIX files out of Git.
 
 ---
@@ -26,6 +36,7 @@
 ### Task 1: Range-aware class-list tree
 
 **Files:**
+
 - Create: `src/core/parse-class-list.ts`
 - Modify: `src/core/expand-text.ts`
 - Modify: `src/index.ts`
@@ -33,6 +44,7 @@
 - Modify: `tests/core/public-api.test.ts`
 
 **Interfaces:**
+
 - Produces:
 
 ```ts
@@ -67,7 +79,8 @@ export function parseVariantGroupClassList(
 ): ClassListNode[];
 ```
 
-- Keeps existing `expandVariantGroupsInText`, `splitTopLevelUtilities`, error type, and strictness behavior source-compatible.
+- Keeps existing `expandVariantGroupsInText`, `splitTopLevelUtilities`, error type, and
+  strictness behavior source-compatible.
 
 - [ ] **Step 1: Write failing parser tests with hand-derived ranges**
 
@@ -154,6 +167,7 @@ git commit -m "feat: expose range-aware variant group parsing"
 ### Task 2: VS Code package scaffold and static class-list extraction
 
 **Files:**
+
 - Create: `packages/vscode/package.json`
 - Create: `packages/vscode/tsconfig.json`
 - Create: `packages/vscode/tsup.config.ts`
@@ -164,6 +178,7 @@ git commit -m "feat: expose range-aware variant group parsing"
 - Modify: `pnpm-lock.yaml`
 
 **Interfaces:**
+
 - Consumes: `parseVariantGroupClassList` and node types from `tailwind-variant-groups`.
 - Produces:
 
@@ -188,12 +203,13 @@ export function extractStaticClassLists(
 
 - [ ] **Step 1: Add package test scaffolding and a failing extraction test**
 
-Create package metadata named `tailwind-variant-groups-vscode` version `0.1.0`, publisher
-`eugee29`, display name `Tailwind Variant Groups`, private for this phase, with VS Code
-engine `^1.96.0` and main entry `./dist/extension.cjs`. Add workspace dependency
-`tailwind-variant-groups: workspace:*`, runtime dependencies `@babel/parser` and
-`@tailwindcss/node`, and development dependencies for VS Code types, Vitest, tsup, and
-VSIX packaging. Add scripts `build`, `typecheck`, `test`, `package:vsix`, and `verify`.
+Create package metadata named `tailwind-variant-groups-vscode` version `0.1.0`,
+publisher `eugee29`, display name `Tailwind Variant Groups`, private for this phase,
+with VS Code engine `^1.96.0` and main entry `./dist/extension.cjs`. Add workspace
+dependency `tailwind-variant-groups: workspace:*`, runtime dependencies `@babel/parser`
+and `@tailwindcss/node`, and development dependencies for VS Code types, Vitest, tsup,
+and VSIX packaging. Add scripts `build`, `typecheck`, `test`, `package:vsix`, and
+`verify`.
 
 Test JSX attributes, configured callees, nested arrays/objects/conditionals, ignored
 unconfigured strings, and static template literals. Use literal document offsets:
@@ -252,12 +268,14 @@ git commit -m "feat(vscode): extract static Tailwind class lists"
 ### Task 3: Hover target resolution and rendering model
 
 **Files:**
+
 - Create: `packages/vscode/src/hover-target.ts`
 - Create: `packages/vscode/src/hover-markdown.ts`
 - Create: `packages/vscode/tests/hover-target.test.ts`
 - Create: `packages/vscode/tests/hover-markdown.test.ts`
 
 **Interfaces:**
+
 - Produces:
 
 ```ts
@@ -350,16 +368,21 @@ git commit -m "feat(vscode): resolve grouped hover targets"
 ### Task 4: Tailwind v4 CSS preview service
 
 **Files:**
+
 - Create: `packages/vscode/src/tailwind-preview.ts`
 - Create: `packages/vscode/tests/tailwind-preview.test.ts`
 - Create: `packages/vscode/tests/fixtures/tailwind.css`
 
 **Interfaces:**
+
 - Produces:
 
 ```ts
 export interface TailwindPreviewService {
-  candidatesToCss(stylesheet: string, candidates: readonly string[]): Promise<(string | null)[]>;
+  candidatesToCss(
+    stylesheet: string,
+    candidates: readonly string[],
+  ): Promise<(string | null)[]>;
   invalidate(stylesheet?: string): void;
 }
 
@@ -376,8 +399,8 @@ Assert literal CSS fragments for:
 - the custom utility;
 - an unknown candidate returning `null`;
 - two calls with unchanged stylesheet returning identical output;
-- `invalidate(stylesheet)` followed by a fixture change causing reloaded output, with the
-  temporary changing stylesheet created under the test temp directory.
+- `invalidate(stylesheet)` followed by a fixture change causing reloaded output, with
+  the temporary changing stylesheet created under the test temp directory.
 
 - [ ] **Step 2: Run the preview test and verify RED**
 
@@ -395,9 +418,9 @@ versions outside `>=4.3 <5`. Load CSS with `__unstable__loadDesignSystem` and ca
 `candidatesToCss([...candidates])`.
 
 Cache self-contained stylesheets by resolved path and exact CSS contents. Treat any
-`@import`, `@reference`, `@config`, or `@plugin` other than the direct Tailwind import as
-uncacheable, matching the ESLint adapter. `invalidate()` clears one normalized path or
-the complete cache.
+`@import`, `@reference`, `@config`, or `@plugin` other than the direct Tailwind import
+as uncacheable, matching the ESLint adapter. `invalidate()` clears one normalized path
+or the complete cache.
 
 - [ ] **Step 4: Run preview tests and verify GREEN**
 
@@ -422,6 +445,7 @@ git commit -m "feat(vscode): generate Tailwind CSS hover previews"
 ### Task 5: VS Code activation adapter and configuration
 
 **Files:**
+
 - Create: `packages/vscode/src/settings.ts`
 - Create: `packages/vscode/src/provider.ts`
 - Create: `packages/vscode/src/extension.ts`
@@ -431,8 +455,11 @@ git commit -m "feat(vscode): generate Tailwind CSS hover previews"
 - Modify: `packages/vscode/tsup.config.ts`
 
 **Interfaces:**
-- Consumes: extraction, target resolution, Markdown rendering, and Tailwind preview service from Tasks 2-4.
-- Produces: VS Code `activate(context)` registering one hover provider for the four supported language IDs.
+
+- Consumes: extraction, target resolution, Markdown rendering, and Tailwind preview
+  service from Tasks 2-4.
+- Produces: VS Code `activate(context)` registering one hover provider for the four
+  supported language IDs.
 
 - [ ] **Step 1: Write failing provider behavior tests**
 
@@ -443,8 +470,8 @@ preview boundary. Assert that the provider core:
 - maps the VS Code-style offset to the correct effective candidates;
 - passes those exact candidates to the preview service;
 - returns the exact Markdown string and target range;
-- returns no result when hovers are disabled, stylesheet is missing, source is malformed,
-  the request is cancelled, or every candidate is unsupported.
+- returns no result when hovers are disabled, stylesheet is missing, source is
+  malformed, the request is cancelled, or every candidate is unsupported.
 
 - [ ] **Step 2: Run provider tests and verify RED**
 
@@ -458,8 +485,9 @@ Expected: import failure because provider core does not exist.
 
 Resolve the stylesheet relative to the document's workspace folder and expose the
 defaults from the spec. Cache extracted class lists by `{uri, version}`. Do not import
-the VS Code module in the core provider; accept document text, filename, version, offset,
-resolved settings, cancellation predicate, and preview service through a typed request.
+the VS Code module in the core provider; accept document text, filename, version,
+offset, resolved settings, cancellation predicate, and preview service through a typed
+request.
 
 - [ ] **Step 4: Run provider tests and verify GREEN**
 
@@ -475,10 +503,10 @@ registers a stylesheet watcher; and disposes all registrations through
 
 - [ ] **Step 6: Implement the VS Code adapter and verify GREEN**
 
-`activate` reads `tailwindVariantGroups` settings at hover time, calls the pure provider,
-converts offsets/ranges through `TextDocument`, and returns `new vscode.Hover` with a
-trusted-false `MarkdownString`. It logs each distinct configuration/load failure once.
-The watcher invalidates the preview cache on create/change/delete. If
+`activate` reads `tailwindVariantGroups` settings at hover time, calls the pure
+provider, converts offsets/ranges through `TextDocument`, and returns `new vscode.Hover`
+with a trusted-false `MarkdownString`. It logs each distinct configuration/load failure
+once. The watcher invalidates the preview cache on create/change/delete. If
 `tailwindCSS.hovers` is not `false`, write one coexistence warning to the output channel
 without changing settings or showing repeated notifications.
 
@@ -500,6 +528,7 @@ git commit -m "feat(vscode): register Tailwind variant group hovers"
 ### Task 6: VSIX packaging, documentation, and repository verification
 
 **Files:**
+
 - Create: `packages/vscode/README.md`
 - Create: `packages/vscode/scripts/test-package.mjs`
 - Modify: `packages/vscode/package.json`
@@ -509,14 +538,16 @@ git commit -m "feat(vscode): register Tailwind variant group hovers"
 - Modify: `pnpm-lock.yaml`
 
 **Interfaces:**
+
 - Consumes: compiled extension from Task 5.
-- Produces: local VSIX, package smoke proof, root verification integration, and installation instructions.
+- Produces: local VSIX, package smoke proof, root verification integration, and
+  installation instructions.
 
 - [ ] **Step 1: Write the package smoke script before packaging changes**
 
 The script runs `vsce ls --yarn false` and fails unless the packaged file list includes
-`dist/extension.cjs`, `package.json`, and `README.md` while excluding `src`, `tests`, and
-fixtures. It then imports the compiled pure provider entry and executes one grouped
+`dist/extension.cjs`, `package.json`, and `README.md` while excluding `src`, `tests`,
+and fixtures. It then imports the compiled pure provider entry and executes one grouped
 hover against the real fixture stylesheet, asserting `md:hover:` CSS is present.
 
 - [ ] **Step 2: Run the package smoke script and verify RED**
