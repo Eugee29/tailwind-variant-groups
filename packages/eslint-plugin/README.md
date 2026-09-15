@@ -106,6 +106,22 @@ Tailwind's class order, and recursively group repeated variant prefixes:
 <div className="p-4 md:(my-2 size-2 hover:(bg-red-500 text-white))" />
 ```
 
+With the default `sort: true`, grouping is maximum-safe rather than limited to adjacent
+prefixes. Tailwind-recognized candidates may join the first group with the same prefix,
+while their exact variant-chain order is preserved:
+
+```tsx
+// Before
+<div className="hover:border-purple-500 hover:bg-red-500 md:bg-yellow-500 hover:md:bg-amber-500" />
+
+// After eslint --fix
+<div className="hover:(border-purple-500 bg-red-500 md:bg-amber-500) md:bg-yellow-500" />
+```
+
+The last utility still expands to `hover:md:bg-amber-500`; the formatter never changes
+it to `md:hover:bg-amber-500`. Candidates Tailwind cannot decompose exactly remain
+opaque and split maximum-grouping runs.
+
 The rule targets static string literals, static template literals, and static strings
 nested inside configured callee arguments. The default JSX attributes are `class` and
 `className`; the default callees are `cn`, `clsx`, and `cva`. Values inside arrays,
@@ -139,7 +155,7 @@ Shared settings live under `settings["tailwind-variant-groups"]`:
 | -------------- | --------- | ------- | --------------------------------------------------------------------------------------------------- |
 | `canonicalize` | `boolean` | `true`  | Use Tailwind's canonical spelling for recognized candidates.                                        |
 | `collapse`     | `boolean` | `true`  | Let Tailwind combine related utilities, including logical-to-physical canonicalization.             |
-| `sort`         | `boolean` | `true`  | Apply Tailwind's class order before grouping.                                                       |
+| `sort`         | `boolean` | `true`  | Apply Tailwind's class order and enable maximum-safe grouping.                                      |
 | `group`        | `boolean` | `true`  | Recursively serialize repeated variant prefixes as groups. When `false`, output expanded utilities. |
 
 Rule-level values override shared settings. For example, this preserves post-analysis
@@ -153,8 +169,9 @@ candidate order while retaining canonicalization and grouping:
 }
 ```
 
-With `sort: false`, an input that canonicalizes to `md:size-2 md:my-2` is emitted as
-`md:(size-2 my-2)`. The default sorted output is `md:(my-2 size-2)`.
+With `sort: false`, source order is preserved and only contiguous prefixes are grouped.
+An input that canonicalizes to `md:size-2 md:my-2` is emitted as `md:(size-2 my-2)`. The
+default sorted output is `md:(my-2 size-2)`.
 
 `no-invalid-variant-groups` accepts only `attributes` and `callees` as rule-level
 options; it does not need a stylesheet.

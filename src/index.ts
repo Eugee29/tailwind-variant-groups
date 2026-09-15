@@ -10,3 +10,11 @@ export {
   type ExpandTextOptions,
   type TextExpansion,
 } from "./core/expand-text.js";
+export {
+  parseVariantGroupClassList,
+  type ClassCandidateNode,
+  type ClassListNode,
+  type ParseClassListOptions,
+  type TextRange,
+  type VariantGroupNode,
+} from "./core/parse-class-list.js";

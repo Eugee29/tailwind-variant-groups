@@ -1,0 +1,10 @@
+.vscode/**
+src/**
+tests/**
+scripts/**
+node_modules/**
+*.config.ts
+tsconfig.json
+*.vsix
+dist/*.map
+dist/provider.cjs

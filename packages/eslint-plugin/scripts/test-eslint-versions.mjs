@@ -84,7 +84,7 @@ for (const [packageName, major] of [
 
     for (const [text, expected] of [
       ["don't", "don't"],
-      ["don't md:(flex gap-4)", "don't md:flex md:gap-4"],
+      ["don't md:(gap-4 flex)", "don't md:(flex gap-4)"],
     ]) {
       const code = `cn("${text}")`;
       const apostrophe = linter.verifyAndFix(code, config);

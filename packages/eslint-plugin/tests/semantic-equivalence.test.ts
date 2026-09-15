@@ -131,4 +131,37 @@ describe("real Tailwind semantic equivalence", () => {
       ]),
     );
   }, 30_000);
+
+  it("preserves declarations while maximizing repeated variant prefixes", async () => {
+    const input = [
+      "hover:border-purple-500",
+      "hover:bg-red-500",
+      "md:bg-yellow-500",
+      "hover:md:bg-amber-500",
+    ];
+    const result = await analyzeCandidateLists({
+      stylesheet,
+      lists: [input],
+      options: { canonicalize: false, collapse: false, rootFontSize: 16 },
+    });
+    const formatted = serializeVariantGroups(result.lists[0]!, {
+      sort: true,
+      group: true,
+    });
+    expect(formatted).toBe(
+      "hover:(border-purple-500 bg-red-500 md:bg-amber-500) md:bg-yellow-500",
+    );
+
+    const flattened = splitTopLevelUtilities(expandVariantGroupsInText(formatted).code);
+    expect([...flattened].sort()).toEqual([...input].sort());
+
+    const designSystem = await __unstable__loadDesignSystem(
+      await fs.readFile(stylesheet, "utf8"),
+      { base: path.dirname(stylesheet) },
+    );
+    const spacingPx = Number.parseFloat(designSystem.theme.get(["--spacing"])!) * 16;
+    expect(declarations(designSystem.candidatesToAst(flattened), spacingPx)).toEqual(
+      declarations(designSystem.candidatesToAst(input), spacingPx),
+    );
+  }, 30_000);
 });

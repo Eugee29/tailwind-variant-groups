@@ -57,4 +57,65 @@ describe("pure candidate formatter", () => {
       "md:(flex hover:bg-red-500) md:custom lg:(grid gap-4)",
     );
   });
+
+  it("maximally groups safely movable prefixes after Tailwind sorting", () => {
+    const values = [
+      candidate("hover:border-purple-500", ["hover"], "border-purple-500", "1", 0),
+      candidate("hover:bg-red-500", ["hover"], "bg-red-500", "2", 1),
+      candidate("md:bg-yellow-500", ["md"], "bg-yellow-500", "3", 2),
+      candidate("hover:md:bg-amber-500", ["hover", "md"], "bg-amber-500", "4", 3),
+    ];
+
+    expect(serializeVariantGroups(values, { sort: true, group: true })).toBe(
+      "hover:(border-purple-500 bg-red-500 md:bg-amber-500) md:bg-yellow-500",
+    );
+  });
+
+  it("maximally groups nested prefixes without changing variant order", () => {
+    const values = [
+      candidate("hover:focus:flex", ["hover", "focus"], "flex", "1", 0),
+      candidate("hover:md:block", ["hover", "md"], "block", "2", 1),
+      candidate("hover:focus:grid", ["hover", "focus"], "grid", "3", 2),
+    ];
+
+    expect(serializeVariantGroups(values, { sort: true, group: true })).toBe(
+      "hover:(focus:(flex grid) md:block)",
+    );
+  });
+
+  it("preserves duplicate utilities while grouping across recognized candidates", () => {
+    const values = [
+      candidate("hover:flex", ["hover"], "flex", "1", 0),
+      candidate("md:block", ["md"], "block", "2", 1),
+      candidate("hover:flex", ["hover"], "flex", "3", 2),
+    ];
+
+    expect(serializeVariantGroups(values, { sort: true, group: true })).toBe(
+      "hover:(flex flex) md:block",
+    );
+  });
+
+  it("does not group across an opaque candidate in the selected order", () => {
+    const values = [
+      candidate("hover:flex", ["hover"], "flex", null, 0),
+      candidate("custom-token", [], "custom-token", null, 1, false),
+      candidate("hover:grid", ["hover"], "grid", null, 2),
+    ];
+
+    expect(serializeVariantGroups(values, { sort: true, group: true })).toBe(
+      "hover:flex custom-token hover:grid",
+    );
+  });
+
+  it("keeps contiguous-only grouping when sorting is disabled", () => {
+    const values = [
+      candidate("hover:flex", ["hover"], "flex", "1", 0),
+      candidate("md:block", ["md"], "block", "2", 1),
+      candidate("hover:grid", ["hover"], "grid", "3", 2),
+    ];
+
+    expect(serializeVariantGroups(values, { sort: false, group: true })).toBe(
+      "hover:flex md:block hover:grid",
+    );
+  });
 });

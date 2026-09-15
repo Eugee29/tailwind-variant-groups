@@ -68,11 +68,91 @@ function serializeAtDepth(
   return output;
 }
 
+interface PrefixTrieNode {
+  entries: PrefixTrieEntry[];
+  variants: Map<string, PrefixTrieVariant>;
+  leafCount: number;
+}
+
+type PrefixTrieEntry = PrefixTrieUtility | PrefixTrieVariant;
+
+interface PrefixTrieUtility {
+  kind: "utility";
+  utility: string;
+}
+
+interface PrefixTrieVariant {
+  kind: "variant";
+  variant: string;
+  node: PrefixTrieNode;
+}
+
+function createPrefixTrieNode(): PrefixTrieNode {
+  return { entries: [], variants: new Map(), leafCount: 0 };
+}
+
+function buildPrefixTrie(items: readonly AnalyzedCandidate[]): PrefixTrieNode {
+  const root = createPrefixTrieNode();
+
+  for (const item of items) {
+    let node = root;
+    const path = [root];
+
+    for (const variant of item.variants) {
+      let entry = node.variants.get(variant);
+      if (!entry) {
+        entry = { kind: "variant", variant, node: createPrefixTrieNode() };
+        node.variants.set(variant, entry);
+        node.entries.push(entry);
+      }
+      node = entry.node;
+      path.push(node);
+    }
+
+    node.entries.push({ kind: "utility", utility: item.utility });
+    for (const pathNode of path) pathNode.leafCount += 1;
+  }
+
+  return root;
+}
+
+function serializePrefixTrie(node: PrefixTrieNode): string[] {
+  return node.entries.map((entry) => {
+    if (entry.kind === "utility") return entry.utility;
+
+    const body = serializePrefixTrie(entry.node);
+    return entry.node.leafCount >= 2
+      ? entry.variant + ":(" + body.join(" ") + ")"
+      : entry.variant + ":" + body[0];
+  });
+}
+
+function serializeMaximumParsedRuns(items: readonly AnalyzedCandidate[]): string[] {
+  const output: string[] = [];
+
+  for (let index = 0; index < items.length;) {
+    if (!items[index]!.parsed) {
+      output.push(items[index]!.raw);
+      index += 1;
+      continue;
+    }
+
+    let end = index + 1;
+    while (end < items.length && items[end]!.parsed) end += 1;
+    output.push(...serializePrefixTrie(buildPrefixTrie(items.slice(index, end))));
+    index = end;
+  }
+
+  return output;
+}
+
 export function serializeVariantGroups(
   items: readonly AnalyzedCandidate[],
   options: SerializeOptions,
 ): string {
   const ordered = options.sort ? sortAnalyzedCandidates(items) : [...items];
   if (!options.group) return ordered.map((item) => item.raw).join(" ");
-  return serializeAtDepth(ordered, 0).join(" ");
+  return options.sort
+    ? serializeMaximumParsedRuns(ordered).join(" ")
+    : serializeAtDepth(ordered, 0).join(" ");
 }

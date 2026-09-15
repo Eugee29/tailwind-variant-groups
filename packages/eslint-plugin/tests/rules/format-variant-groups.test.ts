@@ -25,7 +25,10 @@ function candidate(raw: string, sourceIndex: number): AnalyzedCandidate {
     "my-2",
     "flex",
     "gap-4",
+    "border-purple-500",
     "bg-red-500",
+    "bg-yellow-500",
+    "bg-amber-500",
     "text-white",
   ].indexOf(utility);
   return {
@@ -72,6 +75,12 @@ tester.run("format-variant-groups", rule, {
     {
       code: '<div className="p-4 md:w-[8px] md:h-[8px] md:mt-2 md:mb-2 md:hover:bg-red-500 md:hover:text-white" />',
       output: '<div className="p-4 md:(size-2 my-2 hover:(bg-red-500 text-white))" />',
+      errors: [{ messageId: "needsFormatting" }],
+    },
+    {
+      code: '<div className="hover:border-purple-500 hover:bg-red-500 md:bg-yellow-500 hover:md:bg-amber-500" />',
+      output:
+        '<div className="hover:(border-purple-500 bg-red-500 md:bg-amber-500) md:bg-yellow-500" />',
       errors: [{ messageId: "needsFormatting" }],
     },
     ...["cn", "clsx", "cva"].map((callee) => ({

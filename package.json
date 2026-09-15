@@ -53,8 +53,9 @@
     "test:package": "pnpm build && node scripts/test-package-types.mjs",
     "test:next": "pnpm build && node scripts/test-next-fixture.mjs",
     "test:eslint": "pnpm --filter eslint-plugin-tailwind-variant-groups verify && node scripts/test-eslint-fixture.mjs",
+    "test:vscode": "pnpm --filter tailwind-variant-groups-vscode verify",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm format:check && pnpm typecheck && pnpm test && pnpm test:package && pnpm test:eslint && pnpm test:next"
+    "verify": "pnpm format:check && pnpm typecheck && pnpm test && pnpm test:package && pnpm test:eslint && pnpm test:vscode && pnpm test:next"
   },
   "dependencies": {
     "@babel/parser": "^7.28.0",
