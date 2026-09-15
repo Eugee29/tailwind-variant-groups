@@ -8,6 +8,14 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
 const vsce = require.resolve("@vscode/vsce/vsce");
+const packageMetadata = JSON.parse(
+  await fs.readFile(path.join(packageRoot, "package.json"), "utf8"),
+);
+
+if (packageMetadata.icon !== "assets/icon.png") {
+  throw new Error("VS Code extension manifest is missing assets/icon.png");
+}
+
 const listed = execFileSync(process.execPath, [vsce, "ls", "--no-dependencies"], {
   cwd: packageRoot,
   encoding: "utf8",
@@ -16,7 +24,12 @@ const listed = execFileSync(process.execPath, [vsce, "ls", "--no-dependencies"],
   .map((line) => line.trim().replaceAll("\\", "/"))
   .filter(Boolean);
 
-for (const required of ["dist/extension.cjs", "package.json", "README.md"]) {
+for (const required of [
+  "assets/icon.png",
+  "dist/extension.cjs",
+  "package.json",
+  "README.md",
+]) {
   if (!listed.includes(required)) {
     throw new Error(`VSIX file list is missing ${required}`);
   }
