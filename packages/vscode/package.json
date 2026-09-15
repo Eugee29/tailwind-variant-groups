@@ -6,6 +6,7 @@
   "private": true,
   "publisher": "eugee29",
   "license": "MIT",
+  "icon": "assets/icon.png",
   "type": "module",
   "repository": {
     "type": "git",
